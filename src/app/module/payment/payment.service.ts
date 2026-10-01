@@ -4,7 +4,7 @@ import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import type Stripe from "stripe";
-import { sendEmailWithTemplate } from "../../utils/sendEmailWithTemplate";
+import { sendEmailWithTemplate } from "../../lib/email/index";
 
 const createPaymentSession = async (userId: string, amount: number) => {
 	const recruiter = await prisma.recruiterProfile.findUnique({

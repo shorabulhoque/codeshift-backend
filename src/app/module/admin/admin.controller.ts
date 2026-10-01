@@ -4,7 +4,7 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { AdminService } from "./admin.service";
 
-const getPendingRecruiters = catchAsync(async (req: Request, res: Response) => {
+const getPendingRecruiters = catchAsync(async (_req: Request, res: Response) => {
 	const result = await AdminService.getPendingRecruiters();
 
 	sendResponse(res, {
@@ -42,7 +42,7 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-const getPlatformStats = catchAsync(async (req: Request, res: Response) => {
+const getPlatformStats = catchAsync(async (_req: Request, res: Response) => {
 	const result = await AdminService.getPlatformStats();
 
 	sendResponse(res, {

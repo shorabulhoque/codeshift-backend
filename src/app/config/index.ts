@@ -4,7 +4,7 @@ import path from "path";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 export default {
-	env: process.env.NODE_ENV || "development",
+	env: process.env.NODE_ENV || "production",
 	isProduction: process.env.NODE_ENV === "production",
 	isDevelopment: process.env.NODE_ENV === "development",
 	port: process.env.PORT!,
@@ -67,12 +67,16 @@ export default {
 		app_secret: process.env.BKASH_APP_SECRET,
 	},
 
-	smtp: {
-		host: process.env.SMTP_HOST || "://gmail.com",
-		port: Number(process.env.SMTP_PORT),
-		user: process.env.SMTP_USER!,
-		password: process.env.SMTP_PASSWORD!,
-		sender: process.env.EMAIL_SENDER,
+	email: {
+		provider: process.env.EMAIL_PROVIDER || "nodemailer",
+		sender: process.env.EMAIL_SENDER || "CodeShift Support <no-reply@codeshift.com>",
+		resend_api_key: process.env.RESEND_API_KEY!,
+		smtp: {
+			host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+			port: Number(process.env.SMTP_PORT) || 587,
+			user: process.env.SMTP_USER!,
+			pass: process.env.SMTP_PASSWORD!,
+		},
 	},
 
 	cloudinary: {

@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import type { ApplicationStatus } from "../../../../generated/prisma/enums";
-import { sendEmailWithTemplate } from "../../utils/sendEmailWithTemplate";
+import { sendEmailWithTemplate } from "../../lib/email/index";
 
 const applyJob = async (
 	userId: string,

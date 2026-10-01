@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import AppError from "../errors/AppError";
-import cloudinary from "../lib/cloudinary";
+import cloudinary from "./cloudinary";
 
 export const uploadToCloudinary = async (
 	file: Express.Multer.File,

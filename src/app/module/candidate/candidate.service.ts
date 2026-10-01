@@ -6,7 +6,7 @@ import type { IUpdateCandidateProfile } from "./candidate.interface";
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary,
-} from "../../utils/fileUploader";
+} from "../../lib/fileUploader";
 
 const updateMyProfile = async (
 	authUser: IAuthUser,

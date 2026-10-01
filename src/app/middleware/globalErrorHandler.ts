@@ -12,9 +12,9 @@ import handleZodError, { type TErrorSources } from "../errors/handleZodError";
 
 const globalErrorHandler: ErrorRequestHandler = (
 	err: any,
-	req: Request,
+	_req: Request,
 	res: Response,
-	next: NextFunction,
+	_next: NextFunction,
 ): void => {
 	let statusCode: number = httpStatus.INTERNAL_SERVER_ERROR;
 	let message = "Something went wrong!";

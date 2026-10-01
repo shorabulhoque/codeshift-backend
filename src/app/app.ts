@@ -16,14 +16,11 @@ app.use(
 		credentials: true,
 	}),
 );
-
-app.use("/api/v1/payments/webhook", express.raw({ type: "application/json" }));
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
 	res.status(httpStatus.OK).json({
 		success: true,
 		message: "Welcome to the CodeShift Developer Assessment Platform API!",

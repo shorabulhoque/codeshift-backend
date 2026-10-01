@@ -4,7 +4,7 @@ import { prisma } from "../../lib/prisma";
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary,
-} from "../../utils/fileUploader";
+} from "../../lib/fileUploader";
 import type { IAuthUser } from "../auth/auth.interface";
 import type { IUpdateRecruiterProfile } from "./recruiter.interface";
 

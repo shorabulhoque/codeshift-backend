@@ -9,7 +9,7 @@ import { jwtUtils } from "../utils/jwt";
 import { UserStatus } from "../../../generated/prisma/enums";
 
 export const auth = (...requiredRoles: string[]) => {
-	return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+	return catchAsync(async (req: Request, _res: Response, next: NextFunction) => {
 		const token = req.cookies?.accessToken
 			? req.cookies.accessToken
 			: req.headers.authorization?.startsWith("Bearer ")

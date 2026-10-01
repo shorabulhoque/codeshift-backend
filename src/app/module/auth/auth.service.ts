@@ -5,7 +5,7 @@ import config from "../../config";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import redisClient from "../../lib/redis";
-import { sendEmailWithTemplate } from "../../utils/sendEmailWithTemplate";
+import { sendEmailWithTemplate } from "../../lib/email/index";
 import type {
 	IAuthUser,
 	IForgotPasswordPayload,
