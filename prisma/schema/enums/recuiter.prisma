@@ -1,16 +1,16 @@
 enum RecruiterVerificationStatus {
-    PENDING
-    APPROVED
-    REJECTED
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum RecruiterApplicationStatus {
-    PENDING
-    APPROVED
-    REJECTED
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum SubscriptionPlan {
-    FREE
-    PREMIUM
+  FREE
+  PREMIUM
 }

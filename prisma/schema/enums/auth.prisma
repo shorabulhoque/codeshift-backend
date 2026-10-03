@@ -1,16 +1,17 @@
 enum UserRole {
-    ADMIN
-    RECRUITER
-    CANDIDATE
+  ADMIN
+  RECRUITER
+  CANDIDATE
 }
 
 enum UserStatus {
-    ACTIVE
-    BLOCKED
-    PENDING
+  ACTIVE
+  BLOCKED
+  PENDING
 }
 
 enum AuthProvider {
-    CREDENTIALS
-    GOOGLE
+  CREDENTIALS
+  GOOGLE
+  GITHUB
 }

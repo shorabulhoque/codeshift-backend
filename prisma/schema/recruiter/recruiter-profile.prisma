@@ -1,28 +1,28 @@
 model RecruiterProfile {
-    id     String @id @default(uuid())
-    userId String @unique
+  id     String @id @default(uuid())
+  userId String @unique
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // currentVersionId String @unique
+  // currentVersionId String @unique
 
-    // currentVersion RecruiterProfileVersion @relation("CurrentRecruiterProfileVersion", fields: [currentVersionId], references: [id])
+  // currentVersion RecruiterProfileVersion @relation("CurrentRecruiterProfileVersion", fields: [currentVersionId], references: [id])
 
-    currentVersionId String? @unique
+  currentVersionId String? @unique
 
-    currentVersion RecruiterProfileVersion? @relation("CurrentRecruiterProfileVersion", fields: [currentVersionId], references: [id])
+  currentVersion RecruiterProfileVersion? @relation("CurrentRecruiterProfileVersion", fields: [currentVersionId], references: [id])
 
-    versions RecruiterProfileVersion[] @relation("RecruiterProfileVersions")
+  versions RecruiterProfileVersion[] @relation("RecruiterProfileVersions")
 
-    verificationStatus RecruiterVerificationStatus @default(APPROVED)
+  verificationStatus RecruiterVerificationStatus @default(APPROVED)
 
-    subscriptionPlan SubscriptionPlan @default(FREE)
+  subscriptionPlan SubscriptionPlan @default(FREE)
 
-    jobs     Job[]
-    payments Payment[]
+  jobs     Job[]
+  payments Payment[]
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    @@map("recruiter_profiles")
+  @@map("recruiter_profiles")
 }

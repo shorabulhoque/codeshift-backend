@@ -1,31 +1,31 @@
 model CandidateProfile {
-    id     String @id @default(uuid())
-    userId String @unique
+  id     String @id @default(uuid())
+  userId String @unique
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    fullName        String
-    phone           String?
-    headline        String?
-    bio             String?
-    experienceYears Int?
-    address         String?
+  fullName        String
+  phone           String?
+  headline        String?
+  bio             String?
+  experienceYears Int?
+  address         String?
 
-    githubUrl   String?
-    linkedinUrl String?
+  githubUrl   String?
+  linkedinUrl String?
 
-    skills String[] @default([])
+  skills String[] @default([])
 
-    avatar         String?
-    avatarPublicId String?
+  avatar         String?
+  avatarPublicId String?
 
-    resumeUrl      String?
-    resumePublicId String?
+  resumeUrl      String?
+  resumePublicId String?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    jobApplications JobApplication[]
+  jobApplications JobApplication[]
 
-    @@map("candidate_profiles")
+  @@map("candidate_profiles")
 }
