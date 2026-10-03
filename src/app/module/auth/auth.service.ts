@@ -11,9 +11,9 @@ import type {
 	IForgotPasswordPayload,
 	IGoogleLoginPayload,
 	ILoginUserPayload,
-	IRegisterCandidatePayload,
+	// IRegisterCandidatePayload,
 	IRegisterPayload,
-	IRegisterRecruiterPayload,
+	// IRegisterRecruiterPayload,
 	IResetPasswordPayload,
 	IVerifyEmailPayload,
 } from "./auth.interface";
@@ -212,14 +212,16 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 			data: {
 				email: userData.email,
 				password: userData.password,
-				role: userData.role,
-				status: "ACTIVE",
+				roles: [UserRole.CANDIDATE],
+				activeRole: UserRole.CANDIDATE,
+				status: UserStatus.ACTIVE,
 				isEmailVerified: true,
 			},
 			select: {
 				id: true,
 				email: true,
-				role: true,
+				roles: true,
+				activeRole: true,
 				status: true,
 				isEmailVerified: true,
 				createdAt: true,
@@ -227,62 +229,126 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 			},
 		});
 
-		let profile = null;
-
-		if (userData.role === "CANDIDATE") {
-			profile = await tx.candidateProfile.create({
-				data: {
-					userId: user.id,
-					fullName: userData.fullName,
-				},
-			});
-		} else if (userData.role === "RECRUITER") {
-			profile = await tx.recruiterProfile.create({
-				data: {
-					userId: user.id,
-					fullName: userData.fullName,
-					companyName: userData.companyName,
-					businessRegistrationNo: userData.businessRegistrationNo,
-					verificationStatus: "PENDING",
-				},
-			});
-		}
+		const profile = await tx.candidateProfile.create({
+			data: {
+				userId: user.id,
+				fullName: userData.fullName,
+			},
+		});
 
 		return { user, profile };
 	});
 
 	await redisClient.del(stagingKey);
 
-	if (userData.role === "CANDIDATE") {
-		await sendEmailWithTemplate(
-			userData.email,
-			"Welcome to CodeShift!",
-			"candidateWelcomeEmail",
-			{ fullName: userData.fullName },
-		);
-	} else if (userData.role === "RECRUITER") {
-		await sendEmailWithTemplate(
-			userData.email,
-			"CodeShift Recruiter Registration Under Review",
-			"recruiterWelcomeEmail",
-			{
-				fullName: userData.fullName,
-				companyName: userData.companyName,
-				businessRegistrationNo: userData.businessRegistrationNo,
-			},
-		);
-	}
-
-	const responseMessage =
-		userData.role === "RECRUITER"
-			? "Email verified successfully! Your profile is pending admin approval."
-			: "Email verified successfully! Your account is now active.";
+	await sendEmailWithTemplate(
+		userData.email,
+		"Welcome to CodeShift!",
+		"candidateWelcomeEmail",
+		{ fullName: userData.fullName },
+	);
 
 	return {
-		message: responseMessage,
+		message: "Email verified successfully! Your account is now active.",
 		data: result,
 	};
 };
+
+// const verifyEmail = async (payload: IVerifyEmailPayload) => {
+// 	const normalizedEmail = payload.email.trim().toLowerCase();
+// 	const stagingKey = `user-registration:${normalizedEmail}`;
+
+// 	const redisData = await redisClient.get(stagingKey);
+
+// 	if (!redisData) {
+// 		throw new AppError(
+// 			httpStatus.BAD_REQUEST,
+// 			"OTP has expired or registration session is invalid.",
+// 		);
+// 	}
+
+// 	const userData = JSON.parse(redisData);
+
+// 	if (userData.otp !== payload.otp) {
+// 		throw new AppError(httpStatus.BAD_REQUEST, "Invalid OTP code.");
+// 	}
+
+// 	const result = await prisma.$transaction(async (tx) => {
+// 		const user = await tx.user.create({
+// 			data: {
+// 				email: userData.email,
+// 				password: userData.password,
+// 				role: userData.role,
+// 				status: "ACTIVE",
+// 				isEmailVerified: true,
+// 			},
+// 			select: {
+// 				id: true,
+// 				email: true,
+// 				role: true,
+// 				status: true,
+// 				isEmailVerified: true,
+// 				createdAt: true,
+// 				updatedAt: true,
+// 			},
+// 		});
+
+// 		let profile = null;
+
+// 		if (userData.role === "CANDIDATE") {
+// 			profile = await tx.candidateProfile.create({
+// 				data: {
+// 					userId: user.id,
+// 					fullName: userData.fullName,
+// 				},
+// 			});
+// 		} else if (userData.role === "RECRUITER") {
+// 			profile = await tx.recruiterProfile.create({
+// 				data: {
+// 					userId: user.id,
+// 					fullName: userData.fullName,
+// 					companyName: userData.companyName,
+// 					businessRegistrationNo: userData.businessRegistrationNo,
+// 					verificationStatus: "PENDING",
+// 				},
+// 			});
+// 		}
+
+// 		return { user, profile };
+// 	});
+
+// 	await redisClient.del(stagingKey);
+
+// 	if (userData.role === "CANDIDATE") {
+// 		await sendEmailWithTemplate(
+// 			userData.email,
+// 			"Welcome to CodeShift!",
+// 			"candidateWelcomeEmail",
+// 			{ fullName: userData.fullName },
+// 		);
+// 	} else if (userData.role === "RECRUITER") {
+// 		await sendEmailWithTemplate(
+// 			userData.email,
+// 			"CodeShift Recruiter Registration Under Review",
+// 			"recruiterWelcomeEmail",
+// 			{
+// 				fullName: userData.fullName,
+// 				companyName: userData.companyName,
+// 				businessRegistrationNo: userData.businessRegistrationNo,
+// 			},
+// 		);
+// 	}
+
+// 	const responseMessage =
+// 		userData.role === "RECRUITER"
+// 			? "Email verified successfully! Your profile is pending admin approval."
+// 			: "Email verified successfully! Your account is now active.";
+
+// 	return {
+// 		message: responseMessage,
+// 		data: result,
+// 	};
+// };
 
 const loginUser = async (payload: ILoginUserPayload) => {
 	const { password } = payload;
