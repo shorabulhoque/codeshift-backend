@@ -1,0 +1,30 @@
+model RecruiterProfileVersion {
+    id String @id @default(uuid())
+
+    recruiterProfileId String
+
+    recruiterProfile RecruiterProfile @relation("RecruiterProfileVersions", fields: [recruiterProfileId], references: [id], onDelete: Cascade)
+
+    currentForProfile RecruiterProfile? @relation("CurrentRecruiterProfileVersion")
+
+    version Int
+
+    fullName    String?
+    designation String?
+
+    companyName            String
+    companyWebsite         String?
+    companySize            String?
+    businessRegistrationNo String
+
+    location String?
+
+    companyLogo         String?
+    companyLogoPublicId String?
+
+    createdAt DateTime @default(now())
+
+    @@unique([recruiterProfileId, version])
+    @@index([recruiterProfileId])
+    @@map("recruiter_profile_versions")
+}

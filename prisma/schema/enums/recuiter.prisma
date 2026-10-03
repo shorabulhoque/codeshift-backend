@@ -1,0 +1,16 @@
+enum RecruiterVerificationStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum RecruiterApplicationStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum SubscriptionPlan {
+    FREE
+    PREMIUM
+}

@@ -1,0 +1,10 @@
+enum PaymentStatus {
+    PENDING
+    COMPLETED
+    FAILED
+    CANCELLED
+}
+
+enum PaymentGateway {
+    STRIPE
+}

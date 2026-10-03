@@ -1,0 +1,28 @@
+model JobApplication {
+    id String @id @default(uuid())
+
+    jobId String
+
+    job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+    candidateId String
+
+    candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+    submissionCode String
+
+    status ApplicationStatus @default(SUBMITTED)
+
+    marks            Int?
+    reviewerFeedback String?
+    interviewDate    DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([jobId, candidateId])
+    @@index([candidateId])
+    @@index([jobId])
+    @@index([status])
+    @@map("job_applications")
+}

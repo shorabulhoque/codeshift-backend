@@ -1,0 +1,20 @@
+enum Difficulty {
+    EASY
+    MEDIUM
+    HARD
+}
+
+enum SubmissionStatus {
+    PENDING
+    PASSED
+    FAILED
+    ERROR
+}
+
+enum ApplicationStatus {
+    SUBMITTED
+    UNDER_REVIEW
+    SHORTLISTED
+    INTERVIEW_SCHEDULED
+    REJECTED
+}

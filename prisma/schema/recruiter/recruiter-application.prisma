@@ -1,0 +1,36 @@
+model RecruiterApplication {
+    id String @id @default(uuid())
+
+    applicantId String
+    applicant   User   @relation("Applicant", fields: [applicantId], references: [id], onDelete: Cascade)
+
+    // Snapshot of applicant information
+    fullName    String
+    designation String?
+
+    companyName            String
+    companyWebsite         String?
+    companySize            String?
+    businessRegistrationNo String
+    location               String?
+
+    companyLogo         String?
+    companyLogoPublicId String?
+
+    status RecruiterApplicationStatus @default(PENDING)
+
+    rejectionReason String?
+
+    reviewedById String?
+    reviewedBy   User?   @relation("Reviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+    reviewedAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([applicantId])
+    @@index([status])
+    @@index([reviewedById])
+    @@map("recruiter_applications")
+}
