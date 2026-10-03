@@ -9,39 +9,7 @@ const passwordValidation = z
 	.regex(/[0-9]/, "Password must contain at least 1 number")
 	.regex(/[^A-Za-z0-9]/, "Password must contain at least 1 special character");
 
-// export const registerCandidateSchema = z.object({
-// 	body: z.object({
-// 		email: z
-// 			.string({ message: "Email is required" })
-// 			.email("Invalid email address format"),
-// 		password: passwordValidation,
-// 		fullName: z
-// 			.string({ message: "Full name is required" })
-// 			.min(3, "Full name must be at least 3 characters long")
-// 			.max(50, "Full name cannot exceed 50 characters"),
-// 	}),
-// });
-
-// export const registerRecruiterSchema = z.object({
-// 	body: z.object({
-// 		email: z
-// 			.string({ message: "Email is required" })
-// 			.email("Invalid email address format"),
-// 		password: passwordValidation,
-// 		fullName: z
-// 			.string({ message: "Full name is required" })
-// 			.min(3, "Full name must be at least 3 characters long")
-// 			.max(50, "Full name cannot exceed 50 characters"),
-// 		companyName: z
-// 			.string({ message: "Company name is required" })
-// 			.min(2, "Company name must be at least 2 characters long"),
-// 		businessRegistrationNo: z
-// 			.string({ message: "Business registration number is required" })
-// 			.min(3, "Business registration number is required"),
-// 	}),
-// });
-
-export const registerSchema = z.object({
+export const registerValidationSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -56,7 +24,7 @@ export const registerSchema = z.object({
 	}),
 });
 
-export const verifyEmailSchema = z.object({
+export const verifyEmailValidationSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -67,12 +35,18 @@ export const verifyEmailSchema = z.object({
 	}),
 });
 
-export const loginUserSchema = z.object({
+const loginValidationSchema = z.object({
 	body: z.object({
 		email: z
-			.string({ message: "Email is required" })
-			.email("Invalid email address format"),
-		password: z.string({ message: "Password is required" }),
+			.string({
+				message: "Email is required",
+			})
+			.email("Invalid email address"),
+		password: z
+			.string({
+				message: "Password is required",
+			})
+			.min(1, "Password cannot be empty"),
 	}),
 });
 
@@ -118,11 +92,9 @@ const changePasswordSchema = z.object({
 });
 
 export const AuthValidation = {
-	registerSchema,
-	// registerCandidateSchema,
-	// registerRecruiterSchema,
-	verifyEmailSchema,
-	loginUserSchema,
+	registerValidationSchema,
+	verifyEmailValidationSchema,
+	loginValidationSchema,
 	GoogleLoginZodSchema,
 	forgotPasswordSchema,
 	resetPasswordSchema,
