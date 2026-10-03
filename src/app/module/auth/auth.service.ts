@@ -12,6 +12,7 @@ import type {
 	IGoogleLoginPayload,
 	ILoginUserPayload,
 	IRegisterCandidatePayload,
+	IRegisterPayload,
 	IRegisterRecruiterPayload,
 	IResetPasswordPayload,
 	IVerifyEmailPayload,
@@ -29,11 +30,13 @@ import type { TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
 import type { Prisma } from "../../../../generated/prisma/client";
 
-const registerCandidate = async (payload: IRegisterCandidatePayload) => {
+const register = async (payload: IRegisterPayload) => {
 	const normalizedEmail = payload.email.trim().toLowerCase();
 
 	const existingUser = await prisma.user.findUnique({
-		where: { email: normalizedEmail },
+		where: {
+			email: normalizedEmail,
+		},
 	});
 
 	if (existingUser) {
@@ -47,14 +50,15 @@ const registerCandidate = async (payload: IRegisterCandidatePayload) => {
 		payload.password,
 		config.bcrypt_salt_rounds,
 	);
+
 	const otp = crypto.randomInt(100000, 1000000).toString();
+
 	const expirationSeconds = 5 * 60;
 
 	const registrationPayload = {
 		otp,
 		email: normalizedEmail,
 		password: hashedPassword,
-		role: "CANDIDATE",
 		fullName: payload.fullName,
 	};
 
@@ -80,58 +84,109 @@ const registerCandidate = async (payload: IRegisterCandidatePayload) => {
 	};
 };
 
-const registerRecruiter = async (payload: IRegisterRecruiterPayload) => {
-	const normalizedEmail = payload.email.trim().toLowerCase();
+// const registerCandidate = async (payload: IRegisterCandidatePayload) => {
+// 	const normalizedEmail = payload.email.trim().toLowerCase();
 
-	const existingUser = await prisma.user.findUnique({
-		where: { email: normalizedEmail },
-	});
+// 	const existingUser = await prisma.user.findUnique({
+// 		where: { email: normalizedEmail },
+// 	});
 
-	if (existingUser) {
-		throw new AppError(
-			httpStatus.CONFLICT,
-			"User with this email already exists!",
-		);
-	}
+// 	if (existingUser) {
+// 		throw new AppError(
+// 			httpStatus.CONFLICT,
+// 			"User with this email already exists!",
+// 		);
+// 	}
 
-	const hashedPassword = await bcrypt.hash(
-		payload.password,
-		config.bcrypt_salt_rounds,
-	);
-	const otp = crypto.randomInt(100000, 1000000).toString();
-	const expirationSeconds = 5 * 60;
+// 	const hashedPassword = await bcrypt.hash(
+// 		payload.password,
+// 		config.bcrypt_salt_rounds,
+// 	);
+// 	const otp = crypto.randomInt(100000, 1000000).toString();
+// 	const expirationSeconds = 5 * 60;
 
-	const registrationPayload = {
-		otp,
-		email: normalizedEmail,
-		password: hashedPassword,
-		role: "RECRUITER",
-		fullName: payload.fullName,
-		companyName: payload.companyName,
-		businessRegistrationNo: payload.businessRegistrationNo,
-	};
+// 	const registrationPayload = {
+// 		otp,
+// 		email: normalizedEmail,
+// 		password: hashedPassword,
+// 		role: "CANDIDATE",
+// 		fullName: payload.fullName,
+// 	};
 
-	await redisClient.setEx(
-		`user-registration:${normalizedEmail}`,
-		expirationSeconds,
-		JSON.stringify(registrationPayload),
-	);
+// 	await redisClient.setEx(
+// 		`user-registration:${normalizedEmail}`,
+// 		expirationSeconds,
+// 		JSON.stringify(registrationPayload),
+// 	);
 
-	await sendEmailWithTemplate(
-		normalizedEmail,
-		"Email Verification OTP",
-		"otpEmail",
-		{
-			otp,
-			expirationMinutes: 5,
-		},
-	);
+// 	await sendEmailWithTemplate(
+// 		normalizedEmail,
+// 		"Email Verification OTP",
+// 		"otpEmail",
+// 		{
+// 			otp,
+// 			expirationMinutes: 5,
+// 		},
+// 	);
 
-	return {
-		message:
-			"Verification code sent to your email. Please verify to complete registration.",
-	};
-};
+// 	return {
+// 		message:
+// 			"Verification code sent to your email. Please verify to complete registration.",
+// 	};
+// };
+
+// const registerRecruiter = async (payload: IRegisterRecruiterPayload) => {
+// 	const normalizedEmail = payload.email.trim().toLowerCase();
+
+// 	const existingUser = await prisma.user.findUnique({
+// 		where: { email: normalizedEmail },
+// 	});
+
+// 	if (existingUser) {
+// 		throw new AppError(
+// 			httpStatus.CONFLICT,
+// 			"User with this email already exists!",
+// 		);
+// 	}
+
+// 	const hashedPassword = await bcrypt.hash(
+// 		payload.password,
+// 		config.bcrypt_salt_rounds,
+// 	);
+// 	const otp = crypto.randomInt(100000, 1000000).toString();
+// 	const expirationSeconds = 5 * 60;
+
+// 	const registrationPayload = {
+// 		otp,
+// 		email: normalizedEmail,
+// 		password: hashedPassword,
+// 		role: "RECRUITER",
+// 		fullName: payload.fullName,
+// 		companyName: payload.companyName,
+// 		businessRegistrationNo: payload.businessRegistrationNo,
+// 	};
+
+// 	await redisClient.setEx(
+// 		`user-registration:${normalizedEmail}`,
+// 		expirationSeconds,
+// 		JSON.stringify(registrationPayload),
+// 	);
+
+// 	await sendEmailWithTemplate(
+// 		normalizedEmail,
+// 		"Email Verification OTP",
+// 		"otpEmail",
+// 		{
+// 			otp,
+// 			expirationMinutes: 5,
+// 		},
+// 	);
+
+// 	return {
+// 		message:
+// 			"Verification code sent to your email. Please verify to complete registration.",
+// 	};
+// };
 
 const verifyEmail = async (payload: IVerifyEmailPayload) => {
 	const normalizedEmail = payload.email.trim().toLowerCase();
@@ -731,8 +786,9 @@ const changePassword = async (
 };
 
 export const AuthService = {
-	registerCandidate,
-	registerRecruiter,
+	register,
+	// registerCandidate,
+	// registerRecruiter,
 	verifyEmail,
 	loginUser,
 	refreshToken,

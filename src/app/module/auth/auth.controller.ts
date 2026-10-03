@@ -7,8 +7,8 @@ import config from "../../config";
 import AppError from "../../errors/AppError";
 import type { IAuthUser } from "./auth.interface";
 
-const registerCandidate = catchAsync(async (req: Request, res: Response) => {
-	const result = await AuthService.registerCandidate(req.body);
+const register = catchAsync(async (req: Request, res: Response) => {
+	const result = await AuthService.register(req.body);
 
 	sendResponse(res, {
 		statusCode: httpStatus.CREATED,
@@ -18,16 +18,27 @@ const registerCandidate = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-const registerRecruiter = catchAsync(async (req: Request, res: Response) => {
-	const result = await AuthService.registerRecruiter(req.body);
+// const registerCandidate = catchAsync(async (req: Request, res: Response) => {
+// 	const result = await AuthService.registerCandidate(req.body);
 
-	sendResponse(res, {
-		statusCode: httpStatus.CREATED,
-		success: true,
-		message: result.message,
-		data: null,
-	});
-});
+// 	sendResponse(res, {
+// 		statusCode: httpStatus.CREATED,
+// 		success: true,
+// 		message: result.message,
+// 		data: null,
+// 	});
+// });
+
+// const registerRecruiter = catchAsync(async (req: Request, res: Response) => {
+// 	const result = await AuthService.registerRecruiter(req.body);
+
+// 	sendResponse(res, {
+// 		statusCode: httpStatus.CREATED,
+// 		success: true,
+// 		message: result.message,
+// 		data: null,
+// 	});
+// });
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
 	const result = await AuthService.verifyEmail(req.body);
@@ -181,8 +192,9 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const AuthController = {
-	registerCandidate,
-	registerRecruiter,
+	register,
+	// registerCandidate,
+	// registerRecruiter,
 	verifyEmail,
 	loginUser,
 	refreshToken,

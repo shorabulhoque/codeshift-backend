@@ -1,10 +1,17 @@
 import { Resend } from "resend";
 import config from "../../config";
 
-const resend = new Resend(config.email.resend_api_key);
+let resendInstance: Resend | null = null;
 
 export const sendWithResend = async (to: string, subject: string, html: string) => {
-    const { error } = await resend.emails.send({
+    if (!resendInstance) {
+        if (!config.email.resend_api_key) {
+            throw new Error("Missing Resend API key in your configuration/environment variables.");
+        }
+        resendInstance = new Resend(config.email.resend_api_key);
+    }
+
+    const { error } = await resendInstance.emails.send({
         from: config.email.sender,
         to: [to],
         subject,
@@ -13,5 +20,5 @@ export const sendWithResend = async (to: string, subject: string, html: string) 
 
     if (error) {
         throw new Error(`Resend Error: ${error.message}`);
-    };
+    }
 };

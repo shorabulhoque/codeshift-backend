@@ -8,16 +8,22 @@ import { USER_ROLE } from "../../constants/auth.constant";
 const router = Router();
 
 router.post(
-	"/register-candidate",
-	validateRequest(AuthValidation.registerCandidateSchema),
-	AuthController.registerCandidate,
+	"/register",
+	validateRequest(AuthValidation.registerSchema),
+	AuthController.register,
 );
 
-router.post(
-	"/register-recruiter",
-	validateRequest(AuthValidation.registerRecruiterSchema),
-	AuthController.registerRecruiter,
-);
+// router.post(
+// 	"/register-candidate",
+// 	validateRequest(AuthValidation.registerCandidateSchema),
+// 	AuthController.registerCandidate,
+// );
+
+// router.post(
+// 	"/register-recruiter",
+// 	validateRequest(AuthValidation.registerRecruiterSchema),
+// 	AuthController.registerRecruiter,
+// );
 
 router.post(
 	"/verify-email",
