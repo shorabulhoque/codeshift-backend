@@ -31,7 +31,8 @@ import { googleClient } from "../../lib/googleAuth";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 const register = async (payload: IRegisterPayload) => {
-	const normalizedEmail = payload.email.trim().toLowerCase();
+	const { email, password, fullName } = payload;
+	const normalizedEmail = email.trim().toLowerCase();
 
 	const existingUser = await prisma.user.findUnique({
 		where: {
@@ -47,7 +48,7 @@ const register = async (payload: IRegisterPayload) => {
 	}
 
 	const hashedPassword = await bcrypt.hash(
-		payload.password,
+		password,
 		config.bcrypt_salt_rounds,
 	);
 
@@ -59,7 +60,7 @@ const register = async (payload: IRegisterPayload) => {
 		otp,
 		email: normalizedEmail,
 		password: hashedPassword,
-		fullName: payload.fullName,
+		fullName: fullName,
 	};
 
 	await redisClient.setEx(
@@ -67,6 +68,13 @@ const register = async (payload: IRegisterPayload) => {
 		expirationSeconds,
 		JSON.stringify(registrationPayload),
 	);
+
+	if (config.isDevelopment) {
+		console.log("\n========================================");
+		console.log(`📩 [DEV ONLY] Registration OTP for: ${normalizedEmail}`);
+		console.log(`🔢 Verification Code: ${otp}`);
+		console.log("========================================\n");
+	}
 
 	await sendEmailWithTemplate(
 		normalizedEmail,
@@ -189,22 +197,33 @@ const register = async (payload: IRegisterPayload) => {
 // };
 
 const verifyEmail = async (payload: IVerifyEmailPayload) => {
-	const normalizedEmail = payload.email.trim().toLowerCase();
-	const stagingKey = `user-registration:${normalizedEmail}`;
+	const { email, otp } = payload;
+	const normalizedEmail = email.trim().toLowerCase();
+	const redisKey = `user-registration:${normalizedEmail}`;
 
-	const redisData = await redisClient.get(stagingKey);
+	const redisData = await redisClient.get(redisKey);
 
 	if (!redisData) {
 		throw new AppError(
 			httpStatus.BAD_REQUEST,
-			"OTP has expired or registration session is invalid.",
+			"OTP has expired or registration session is invalid. Please register again.",
 		);
 	}
 
 	const userData = JSON.parse(redisData);
 
-	if (userData.otp !== payload.otp) {
+	if (userData.otp !== otp) {
 		throw new AppError(httpStatus.BAD_REQUEST, "Invalid OTP code.");
+	}
+
+	const existingUser = await prisma.user.findUnique({
+		where: {
+			email: normalizedEmail,
+		},
+	});
+
+	if (existingUser) {
+		throw new AppError(httpStatus.CONFLICT, "User already exists with this email",);
 	}
 
 	const result = await prisma.$transaction(async (tx) => {
@@ -229,6 +248,14 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 			},
 		});
 
+		await tx.account.create({
+			data: {
+				userId: user.id,
+				provider: AuthProvider.CREDENTIALS,
+				providerId: user.id,
+			},
+		});
+
 		const profile = await tx.candidateProfile.create({
 			data: {
 				userId: user.id,
@@ -239,7 +266,7 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 		return { user, profile };
 	});
 
-	await redisClient.del(stagingKey);
+	await redisClient.del(redisKey);
 
 	await sendEmailWithTemplate(
 		userData.email,
