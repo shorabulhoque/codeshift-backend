@@ -104,9 +104,9 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 		);
 	}
 
-	const userData = JSON.parse(redisData);
+	const registrationData = JSON.parse(redisData);
 
-	if (userData.otp !== otp) {
+	if (registrationData.otp !== otp) {
 		throw new AppError(httpStatus.BAD_REQUEST, "Invalid OTP code.");
 	}
 
@@ -123,8 +123,8 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 	const result = await prisma.$transaction(async (tx) => {
 		const user = await tx.user.create({
 			data: {
-				email: userData.email,
-				password: userData.password,
+				email: registrationData.email,
+				password: registrationData.password,
 				roles: [UserRole.CANDIDATE],
 				activeRole: UserRole.CANDIDATE,
 				status: UserStatus.ACTIVE,
@@ -153,7 +153,7 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 		const profile = await tx.candidateProfile.create({
 			data: {
 				userId: user.id,
-				fullName: userData.fullName,
+				fullName: registrationData.fullName,
 			},
 		});
 
@@ -163,10 +163,10 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 	await redisClient.del(redisKey);
 
 	await sendEmailWithTemplate(
-		userData.email,
+		registrationData.email,
 		"Welcome to CodeShift!",
 		"candidateWelcomeEmail",
-		{ fullName: userData.fullName },
+		{ fullName: registrationData.fullName },
 	);
 
 	return {
@@ -268,63 +268,57 @@ const refreshToken = async (token: string) => {
 		config.jwt.refresh_secret as string,
 	);
 
-	if (!verifiedToken.success || !verifiedToken.data) {
+	if (!verifiedToken.success) {
 		throw new AppError(
 			httpStatus.UNAUTHORIZED,
-			config.isDevelopment
-				? String(verifiedToken.error)
-				: AUTH_ERROR_MESSAGES.INVALID_REFRESH_TOKEN,
+			"Invalid or expired refresh token!",
 		);
 	}
 
-	const decoded = verifiedToken.data as JwtPayload;
+	const { userId } = verifiedToken.data as JwtPayload;
 
 	const user = await prisma.user.findUnique({
-		where: { id: decoded.userId },
+		where: { id: userId, isDeleted: false },
 		include: {
-			recruiterProfile: true,
 			candidateProfile: true,
+			recruiterProfile: {
+				include: {
+					currentVersion: true,
+				},
+			},
 		},
 	});
 
 	if (!user) {
-		throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+		throw new AppError(httpStatus.UNAUTHORIZED, "User does not exist!");
 	}
 
 	if (user.status === UserStatus.BLOCKED) {
 		throw new AppError(
 			httpStatus.FORBIDDEN,
-			"Your account is blocked. Please contact support.",
+			"Your account has been blocked. Please contact support.",
 		);
 	}
 
 	if (user.status === UserStatus.PENDING) {
 		throw new AppError(
 			httpStatus.FORBIDDEN,
-			"Your account is pending activation.",
+			"Your account is pending approval or verification.",
 		);
 	}
 
-	if (user.role === "RECRUITER" && user.recruiterProfile) {
-		if (
-			user.recruiterProfile.verificationStatus ===
-			RecruiterVerificationStatus.REJECTED
-		) {
-			throw new AppError(
-				httpStatus.FORBIDDEN,
-				"Your recruiter account has been rejected.",
-			);
-		}
+	let userFullName = "";
+	if (user.activeRole === UserRole.CANDIDATE) {
+		userFullName = user.candidateProfile?.fullName || "";
+	} else if (user.activeRole === UserRole.RECRUITER) {
+		userFullName = user.recruiterProfile?.currentVersion?.fullName || "";
 	}
 
 	const jwtPayload = {
 		userId: user.id,
 		email: user.email,
-		role: user.role,
-		fullName:
-			user.role === "CANDIDATE"
-				? user.candidateProfile?.fullName
-				: user.recruiterProfile?.fullName,
+		role: user.activeRole,
+		fullName: userFullName,
 	};
 
 	const newAccessToken = jwtUtils.createToken(
@@ -332,7 +326,6 @@ const refreshToken = async (token: string) => {
 		config.jwt.access_secret,
 		{ expiresIn: config.jwt.access_expires_in } as SignOptions,
 	);
-
 	const newRefreshToken = jwtUtils.createToken(
 		jwtPayload,
 		config.jwt.refresh_secret,
@@ -340,8 +333,9 @@ const refreshToken = async (token: string) => {
 	);
 
 	return {
+		message: "Access token refreshed successfully!",
 		accessToken: newAccessToken,
-		refreshToken: newRefreshToken,
+		refreshToken: newRefreshToken
 	};
 };
 

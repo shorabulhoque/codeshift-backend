@@ -56,17 +56,24 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
-	const token = req.cookies.refreshToken;
+	let token = req.cookies?.refreshToken;
+
+
+	if (!token && req.headers.authorization) {
+		token = req.headers.authorization.startsWith("Bearer ")
+			? req.headers.authorization.split(" ")[1]
+			: req.headers.authorization;
+	}
 
 	if (!token) {
 		throw new AppError(
 			httpStatus.UNAUTHORIZED,
-			"Refresh token is missing from cookies",
+			"Refresh token is missing from request!",
 		);
 	}
 
 	const result = await authService.refreshToken(token);
-	const { accessToken: newAccessToken, refreshToken: newRefreshToken } = result;
+	const { message, accessToken: newAccessToken, refreshToken: newRefreshToken } = result;
 
 	res.cookie("accessToken", newAccessToken, {
 		httpOnly: true,
@@ -85,7 +92,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "New access token generated successfully",
+		message: message,
 		data: {
 			newAccessToken,
 			newRefreshToken,
