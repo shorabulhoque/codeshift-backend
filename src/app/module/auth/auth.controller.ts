@@ -156,13 +156,13 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUserPayload;
-	const result = await authService.getMe(user);
+	const { message, data } = await authService.getMe(user);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "User profile fetched successfully!",
-		data: result,
+		message: message,
+		data: data,
 	});
 });
 

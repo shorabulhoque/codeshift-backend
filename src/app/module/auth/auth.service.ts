@@ -613,14 +613,24 @@ const getMe = async (user: IAuthUserPayload) => {
 		select: {
 			id: true,
 			email: true,
-			role: true,
+			roles: true,
+			activeRole: true,
 			status: true,
 			isEmailVerified: true,
-			isSocialAuth: true,
 			createdAt: true,
 			updatedAt: true,
 			candidateProfile: true,
-			recruiterProfile: true,
+			recruiterProfile: {
+				include: {
+					currentVersion: true,
+				},
+			},
+			accounts: {
+				select: {
+					provider: true,
+					createdAt: true,
+				},
+			},
 		},
 	});
 
@@ -635,7 +645,10 @@ const getMe = async (user: IAuthUserPayload) => {
 		);
 	}
 
-	return result;
+	return {
+		message: "User profile fetched successfully!",
+		data: result,
+	};
 };
 
 const changePassword = async (

@@ -47,7 +47,7 @@ router.post(
 
 router.get(
 	"/me",
-	auth(USER_ROLE.ADMIN, USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER),
+	auth(),
 	authController.getMe,
 );
 
