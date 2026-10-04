@@ -58,7 +58,7 @@ const GoogleLoginZodSchema = z.object({
 	}),
 });
 
-const forgotPasswordSchema = z.object({
+const forgotPasswordValidationSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -66,7 +66,7 @@ const forgotPasswordSchema = z.object({
 	}),
 });
 
-const resetPasswordSchema = z.object({
+const resetPasswordValidationSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -91,12 +91,12 @@ const changePasswordSchema = z.object({
 	}),
 });
 
-export const AuthValidation = {
+export const authValidation = {
 	registerValidationSchema,
 	verifyEmailValidationSchema,
 	loginValidationSchema,
 	GoogleLoginZodSchema,
-	forgotPasswordSchema,
-	resetPasswordSchema,
+	forgotPasswordValidationSchema,
+	resetPasswordValidationSchema,
 	changePasswordSchema,
 };

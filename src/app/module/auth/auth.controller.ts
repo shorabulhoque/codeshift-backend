@@ -131,24 +131,23 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 });
 
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
-	await authService.forgotPassword(req.body);
+	const { message } = await authService.forgotPassword(req.body);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Password reset OTP sent to your email successfully",
+		message: message,
 		data: null,
 	});
 });
 
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
-	await authService.resetPassword(req.body);
+	const { message } = await authService.resetPassword(req.body);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message:
-			"Password reset successful. You can now login with your new password.",
+		message: message,
 		data: null,
 	});
 });

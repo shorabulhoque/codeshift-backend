@@ -488,20 +488,27 @@ const forgotPassword = async (payload: IForgotPasswordPayload) => {
 	const normalizedEmail = payload.email.trim().toLowerCase();
 
 	const user = await prisma.user.findUnique({
-		where: { email: normalizedEmail },
+		where: { email: normalizedEmail, isDeleted: false },
 	});
 
-	if (!user || user.isDeleted) {
+	if (!user) {
 		throw new AppError(
 			httpStatus.NOT_FOUND,
-			"User with this email does not exist",
+			"User with this email does not exist!",
 		);
 	}
 
-	if (user.isSocialAuth && !user.password) {
+	if (!user.password) {
 		throw new AppError(
 			httpStatus.BAD_REQUEST,
-			"This account was created using Google login and does not have a password.",
+			"This account was created via Social Auth and does not have a password. Please login using Google or GitHub.",
+		);
+	}
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"Your account is blocked. Please contact support.",
 		);
 	}
 
@@ -514,6 +521,13 @@ const forgotPassword = async (payload: IForgotPasswordPayload) => {
 		JSON.stringify({ otp }),
 	);
 
+	if (config.isDevelopment) {
+		console.log("\n========================================");
+		console.log(`📩 [DEV ONLY] Password reset OTP for: ${normalizedEmail}`);
+		console.log(`🔢 Verification Code: ${otp}`);
+		console.log("========================================\n");
+	}
+
 	await sendEmailWithTemplate(
 		normalizedEmail,
 		"Password Reset Verification Code",
@@ -525,12 +539,13 @@ const forgotPassword = async (payload: IForgotPasswordPayload) => {
 	);
 
 	return {
-		message: "Password reset OTP sent to your email successfully",
+		message: "Password reset OTP sent to your email successfully.",
 	};
 };
 
 const resetPassword = async (payload: IResetPasswordPayload) => {
-	const normalizedEmail = payload.email.trim().toLowerCase();
+	const { email, otp, newPassword } = payload;
+	const normalizedEmail = email.trim().toLowerCase();
 	const resetKey = `password-reset:${normalizedEmail}`;
 
 	const redisData = await redisClient.get(resetKey);
@@ -542,22 +557,22 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 		);
 	}
 
-	const { otp } = JSON.parse(redisData);
+	const { otp: storedOtp } = JSON.parse(redisData);
 
-	if (otp !== payload.otp) {
+	if (storedOtp !== otp) {
 		throw new AppError(httpStatus.BAD_REQUEST, "Invalid OTP code.");
 	}
 
 	const user = await prisma.user.findUnique({
-		where: { email: normalizedEmail },
+		where: { email: normalizedEmail, isDeleted: false },
 	});
 
-	if (!user || user.isDeleted) {
-		throw new AppError(httpStatus.NOT_FOUND, "User not found.");
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User profile not found.");
 	}
 
 	const hashedPassword = await bcrypt.hash(
-		payload.newPassword,
+		newPassword,
 		config.bcrypt_salt_rounds,
 	);
 
@@ -578,8 +593,7 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 	);
 
 	return {
-		message:
-			"Password reset successfully. You can now login with your new password.",
+		message: "Password reset successfully. You can now login with your new password.",
 	};
 };
 
