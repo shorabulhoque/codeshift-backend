@@ -51,7 +51,10 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 		statusCode: httpStatus.OK,
 		success: true,
 		message: message,
-		data: { refreshToken, accessToken },
+		data: {
+			refreshToken,
+			accessToken
+		},
 	});
 });
 
@@ -102,7 +105,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 
 const googleLogin = catchAsync(async (req: Request, res: Response) => {
 	const result = await authService.googleLogin(req.body);
-	const { accessToken, refreshToken, user } = result;
+	const { message, accessToken, refreshToken } = result;
 
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
@@ -121,11 +124,10 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Google login successful",
+		message: message,
 		data: {
 			accessToken,
 			refreshToken,
-			user,
 		},
 	});
 });

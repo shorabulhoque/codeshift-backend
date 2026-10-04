@@ -29,7 +29,7 @@ router.post("/refresh-token", authController.refreshToken);
 
 router.post(
 	"/google",
-	validateRequest(authValidation.GoogleLoginZodSchema),
+	validateRequest(authValidation.GoogleLoginValidationSchema),
 	authController.googleLogin,
 );
 

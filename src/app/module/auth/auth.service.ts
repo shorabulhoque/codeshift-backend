@@ -18,13 +18,11 @@ import type {
 } from "./auth.interface";
 import {
 	AuthProvider,
-	RecruiterVerificationStatus,
 	UserRole,
 	UserStatus,
 } from "../../../../generated/prisma/enums";
 import { jwtUtils } from "../../utils/jwt";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
-import { AUTH_ERROR_MESSAGES } from "../../constants/auth.constant";
 import type { TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
 import type { Prisma } from "../../../../generated/prisma/client";
@@ -343,123 +341,135 @@ const refreshToken = async (token: string) => {
 type UserWithProfiles = Prisma.UserGetPayload<{
 	include: {
 		candidateProfile: true;
-		recruiterProfile: true;
+		recruiterProfile: {
+			include: { currentVersion: true };
+		};
+		accounts: true;
 	};
 }>;
 
 const googleLogin = async (payload: IGoogleLoginPayload) => {
+	const { idToken } = payload;
 	let googlePayload: TokenPayload | null | undefined = null;
 
 	try {
 		const ticket = await googleClient.verifyIdToken({
-			idToken: payload.idToken,
+			idToken: idToken,
 			audience: config.google.client_id,
 		});
 		googlePayload = ticket.getPayload();
 	} catch {
 		throw new AppError(
 			httpStatus.UNAUTHORIZED,
-			"Invalid or expired Google ID Token",
+			"Invalid or expired Google ID Token!",
 		);
 	}
 
 	if (!googlePayload || !googlePayload.email || !googlePayload.name) {
 		throw new AppError(
 			httpStatus.BAD_REQUEST,
-			"Google account information is incomplete",
+			"Google account information is incomplete.",
 		);
 	}
 
-	const email = googlePayload.email.toLowerCase().trim();
+	const normalizedEmail = googlePayload.email.toLowerCase().trim();
+	const googleSub = googlePayload.sub;
+	const resolvedFullName = googlePayload.name || "";
 
-	let user: UserWithProfiles | null = await prisma.user.findUnique({
-		where: { email },
-		include: {
-			candidateProfile: true,
-			recruiterProfile: true,
-		},
-	});
-
-	if (!user) {
-		user = await prisma.user.create({
-			data: {
-				email,
-				role: UserRole.CANDIDATE,
-				provider: AuthProvider.GOOGLE,
-				providerId: googlePayload.sub,
-				isSocialAuth: true,
-				isEmailVerified: true,
-				status: UserStatus.ACTIVE,
-				candidateProfile: {
-					create: {
-						fullName: googlePayload.name,
-						avatar: googlePayload.picture || null,
-					},
-				},
-			},
+	const user = (await prisma.$transaction(async (tx) => {
+		let existingUser: UserWithProfiles | null = await tx.user.findUnique({
+			where: { email: normalizedEmail, isDeleted: false },
 			include: {
 				candidateProfile: true,
-				recruiterProfile: true,
+				recruiterProfile: {
+					include: { currentVersion: true },
+				},
+				accounts: true,
 			},
 		});
-	} else {
-		if (!user.providerId) {
-			user = await prisma.user.update({
-				where: { id: user.id },
+
+		if (!existingUser) {
+			existingUser = await tx.user.create({
 				data: {
-					providerId: googlePayload.sub,
-					isSocialAuth: true,
+					email: normalizedEmail,
+					roles: [UserRole.CANDIDATE],
+					activeRole: UserRole.CANDIDATE,
+					status: UserStatus.ACTIVE,
 					isEmailVerified: true,
+					candidateProfile: {
+						create: {
+							fullName: resolvedFullName,
+							avatar: googlePayload.picture || null,
+						},
+					},
+					accounts: {
+						create: {
+							provider: AuthProvider.GOOGLE,
+							providerId: googleSub,
+						},
+					},
 				},
 				include: {
 					candidateProfile: true,
-					recruiterProfile: true,
+					recruiterProfile: {
+						include: { currentVersion: true },
+					},
+					accounts: true,
 				},
 			});
+		} else {
+			const hasGoogleAccount = existingUser.accounts.some(
+				(acc: { provider: AuthProvider }) => acc.provider === AuthProvider.GOOGLE,
+			);
+
+			if (!hasGoogleAccount) {
+				await tx.account.create({
+					data: {
+						userId: existingUser.id,
+						provider: AuthProvider.GOOGLE,
+						providerId: googleSub,
+					},
+				});
+			}
+
+			if (!existingUser.isEmailVerified) {
+				existingUser = await tx.user.update({
+					where: { id: existingUser.id },
+					data: { isEmailVerified: true },
+					include: {
+						candidateProfile: true,
+						recruiterProfile: {
+							include: { currentVersion: true },
+						},
+						accounts: true,
+					},
+				});
+			}
 		}
+
+		return existingUser;
+	})) as UserWithProfiles;
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"Your account has been blocked. Please contact support.",
+		);
 	}
 
-	if (user.isDeleted || user.status === UserStatus.BLOCKED) {
-		throw new AppError(httpStatus.FORBIDDEN, AUTH_ERROR_MESSAGES.USER_BLOCKED);
-	}
-
-	if (user.role === UserRole.RECRUITER) {
-		if (user.status === UserStatus.PENDING) {
-			throw new AppError(
-				httpStatus.FORBIDDEN,
-				"Your recruiter account is pending Admin approval.",
-			);
-		}
-
-		if (
-			user.recruiterProfile?.verificationStatus ===
-			RecruiterVerificationStatus.PENDING
-		) {
-			throw new AppError(
-				httpStatus.FORBIDDEN,
-				"Your recruiter profile is waiting for Admin verification.",
-			);
-		}
-
-		if (
-			user.recruiterProfile?.verificationStatus ===
-			RecruiterVerificationStatus.REJECTED
-		) {
-			throw new AppError(
-				httpStatus.FORBIDDEN,
-				AUTH_ERROR_MESSAGES.RECRUITER_REJECTED,
-			);
-		}
+	let userFullName = "";
+	if (user.activeRole === UserRole.CANDIDATE) {
+		userFullName = user.candidateProfile?.fullName || resolvedFullName;
+	} else if (user.activeRole === UserRole.RECRUITER) {
+		userFullName =
+			user.recruiterProfile?.currentVersion?.fullName || resolvedFullName;
 	}
 
 	const jwtPayload = {
 		userId: user.id,
 		email: user.email,
-		role: user.role,
-		fullName:
-			user.role === UserRole.CANDIDATE
-				? user.candidateProfile?.fullName
-				: user.recruiterProfile?.fullName,
+		role: user.activeRole,
+		fullName: userFullName,
 	};
 
 	const accessToken = jwtUtils.createToken(
@@ -475,13 +485,9 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 	);
 
 	return {
+		message: "Google login successful!",
 		accessToken,
 		refreshToken,
-		user: {
-			id: user.id,
-			email: user.email,
-			role: user.role,
-		},
 	};
 };
 
