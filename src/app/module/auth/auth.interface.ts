@@ -30,8 +30,13 @@ export interface IResetPasswordPayload {
 	newPassword: string;
 }
 
-export interface IAuthUser {
+export interface IAuthUserPayload {
 	userId: string;
 	email: string;
 	role: UserRole;
+}
+
+export interface IChangePasswordPayload {
+	oldPassword: string;
+	newPassword: string;
 }

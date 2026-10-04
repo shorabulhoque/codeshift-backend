@@ -5,7 +5,7 @@ import sendResponse from "../../utils/sendResponse";
 import { authService } from "./auth.service";
 import config from "../../config";
 import AppError from "../../errors/AppError";
-import type { IAuthUser } from "./auth.interface";
+import type { IAuthUserPayload } from "./auth.interface";
 
 const register = catchAsync(async (req: Request, res: Response) => {
 	const { message } = await authService.register(req.body);
@@ -153,7 +153,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
-	const user = req.user as IAuthUser;
+	const user = req.user as IAuthUserPayload;
 	const result = await authService.getMe(user);
 
 	sendResponse(res, {
@@ -165,13 +165,13 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 const changePassword = catchAsync(async (req: Request, res: Response) => {
-	const user = req.user as IAuthUser;
-	await authService.changePassword(user, req.body);
+	const user = req.user as IAuthUserPayload;
+	const { message } = await authService.changePassword(user, req.body);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Password changed successfully!",
+		message: message,
 		data: null,
 	});
 });

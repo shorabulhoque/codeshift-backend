@@ -7,7 +7,8 @@ import { prisma } from "../../lib/prisma";
 import redisClient from "../../lib/redis";
 import { sendEmailWithTemplate } from "../../lib/email/index";
 import type {
-	IAuthUser,
+	IAuthUserPayload,
+	IChangePasswordPayload,
 	IForgotPasswordPayload,
 	IGoogleLoginPayload,
 	ILoginUserPayload,
@@ -597,7 +598,7 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 	};
 };
 
-const getMe = async (user: IAuthUser) => {
+const getMe = async (user: IAuthUserPayload) => {
 	const result = await prisma.user.findUnique({
 		where: {
 			id: user.userId,
@@ -632,51 +633,51 @@ const getMe = async (user: IAuthUser) => {
 };
 
 const changePassword = async (
-	userPayload: IAuthUser,
-	payload: { oldPassword: string; newPassword: string },
+	authUserPayload: IAuthUserPayload,
+	changePasswordPayload: IChangePasswordPayload,
 ) => {
+	const { userId } = authUserPayload;
+	const { oldPassword, newPassword } = changePasswordPayload;
+
 	const user = await prisma.user.findUnique({
-		where: { id: userPayload.userId, isDeleted: false },
+		where: { id: userId, isDeleted: false },
 	});
 
 	if (!user) {
 		throw new AppError(httpStatus.NOT_FOUND, "User profile not found!");
 	}
 
-	if (user.status === UserStatus.BLOCKED) {
-		throw new AppError(
-			httpStatus.FORBIDDEN,
-			"Your account is blocked. Please contact support.",
-		);
-	}
-
-	if (user.isSocialAuth && !user.password) {
+	if (!user.password) {
 		throw new AppError(
 			httpStatus.BAD_REQUEST,
-			"Social auth accounts do not have a password to change.",
+			"You logged in using a social account (Google/GitHub). You cannot change password here.",
 		);
 	}
 
-	const isPasswordMatched = await bcrypt.compare(
-		payload.oldPassword,
-		user.password as string,
-	);
+	const isPasswordMatched = await bcrypt.compare(oldPassword, user.password);
 
 	if (!isPasswordMatched) {
-		throw new AppError(httpStatus.UNAUTHORIZED, "Incorrect old password.");
+		throw new AppError(
+			httpStatus.UNAUTHORIZED,
+			"Incorrect current password. Please try again.",
+		);
 	}
 
 	const newHashedPassword = await bcrypt.hash(
-		payload.newPassword,
+		newPassword,
 		Number(config.bcrypt_salt_rounds),
 	);
 
 	await prisma.user.update({
 		where: { id: user.id },
-		data: { password: newHashedPassword },
+		data: {
+			password: newHashedPassword,
+		},
 	});
 
-	return null;
+	return {
+		message: "Password changed successfully!",
+	};
 };
 
 export const authService = {

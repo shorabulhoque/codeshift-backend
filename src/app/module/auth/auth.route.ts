@@ -53,8 +53,8 @@ router.get(
 
 router.patch(
 	"/change-password",
-	auth(USER_ROLE.ADMIN, USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER),
-	validateRequest(authValidation.changePasswordSchema),
+	auth(),
+	validateRequest(authValidation.changePasswordValidationSchema),
 	authController.changePassword,
 );
 

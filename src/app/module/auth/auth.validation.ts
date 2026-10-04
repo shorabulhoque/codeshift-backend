@@ -81,7 +81,7 @@ const resetPasswordValidationSchema = z.object({
 	}),
 });
 
-const changePasswordSchema = z.object({
+const changePasswordValidationSchema = z.object({
 	body: z.object({
 		oldPassword: z.string({ message: "Old password is required" }),
 		newPassword: z
@@ -98,5 +98,5 @@ export const authValidation = {
 	GoogleLoginZodSchema,
 	forgotPasswordValidationSchema,
 	resetPasswordValidationSchema,
-	changePasswordSchema,
+	changePasswordValidationSchema,
 };
