@@ -2,34 +2,38 @@ import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import catchAsync from "../../utils/catch-async";
 import sendResponse from "../../utils/send-response";
-import { AdminService } from "./admin.service";
+import { adminService } from "./admin.service";
+import type { IAuthUser } from "./admin.interface";
 
 const getPendingRecruiters = catchAsync(async (_req: Request, res: Response) => {
-	const result = await AdminService.getPendingRecruiters();
+	const result = await adminService.getPendingRecruiters();
+	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Pending recruiters fetched successfully!",
-		data: result,
+		message: message,
+		data: data,
 	});
 });
 
 const verifyRecruiter = catchAsync(async (req: Request, res: Response) => {
+	const { userId } = req.user as IAuthUser;
 	const { id } = req.params;
-	const result = await AdminService.verifyRecruiter(id as string, req.body);
+	const result = await adminService.verifyRecruiter(userId, id as string, req.body);
+	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: `Recruiter status updated to ${req.body.status}!`,
-		data: result,
+		message: message,
+		data: data,
 	});
 });
 
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 	const { id } = req.params;
-	const result = await AdminService.updateUserStatus(
+	const result = await adminService.updateUserStatus(
 		id as string,
 		req.body.status,
 	);
@@ -43,7 +47,7 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getPlatformStats = catchAsync(async (_req: Request, res: Response) => {
-	const result = await AdminService.getPlatformStats();
+	const result = await adminService.getPlatformStats();
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
@@ -53,7 +57,7 @@ const getPlatformStats = catchAsync(async (_req: Request, res: Response) => {
 	});
 });
 
-export const AdminController = {
+export const adminController = {
 	getPendingRecruiters,
 	verifyRecruiter,
 	updateUserStatus,

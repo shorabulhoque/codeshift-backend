@@ -2,18 +2,21 @@ import httpStatus from "http-status";
 import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
 import {
-	RecruiterVerificationStatus,
+	RecruiterApplicationStatus,
+	UserRole,
 	UserStatus,
 } from "../../../../generated/prisma/enums";
+import type { IVerifyRecruiterPayload } from "./admin.interface";
 
 const getPendingRecruiters = async () => {
-	const pendingRecruiters = await prisma.recruiterProfile.findMany({
+	const pendingRecruiters = await prisma.recruiterApplication.findMany({
 		where: {
-			verificationStatus: RecruiterVerificationStatus.PENDING,
+			status: RecruiterApplicationStatus.PENDING,
 		},
 		include: {
-			user: {
+			applicant: {
 				select: {
+					id: true,
 					email: true,
 					status: true,
 					createdAt: true,
@@ -25,42 +28,138 @@ const getPendingRecruiters = async () => {
 		},
 	});
 
-	return pendingRecruiters;
+	return {
+		message: "Pending recruiters fetched successfully!",
+		data: pendingRecruiters,
+	};
 };
 
 const verifyRecruiter = async (
-	recruiterId: string,
-	payload: { status: RecruiterVerificationStatus; rejectionReason?: string },
+	userId: string,
+	applicationId: string,
+	payload: IVerifyRecruiterPayload,
 ) => {
-	const recruiter = await prisma.recruiterProfile.findUnique({
-		where: { id: recruiterId },
+	const application = await prisma.recruiterApplication.findUnique({
+		where: { id: applicationId },
 	});
 
-	if (!recruiter) {
-		throw new AppError(httpStatus.NOT_FOUND, "Recruiter profile not found!");
+	if (!application) {
+		throw new AppError(httpStatus.NOT_FOUND, "Recruiter Application not found!");
 	}
 
-	return await prisma.$transaction(async (tx) => {
-		const updatedProfile = await tx.recruiterProfile.update({
-			where: { id: recruiterId },
+	if (application.status === RecruiterApplicationStatus.APPROVED) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"Recruiter Application is already approved!",
+		);
+	}
+
+	if (application.status === RecruiterApplicationStatus.REJECTED) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"Recruiter Application is already rejected!",
+		);
+	}
+
+	if (payload.status === RecruiterApplicationStatus.REJECTED) {
+		if (!payload.rejectionReason) {
+			throw new AppError(
+				httpStatus.BAD_REQUEST,
+				"Rejection reason is required when rejecting an application!",
+			);
+		}
+
+		const rejectedApplication = await prisma.recruiterApplication.update({
+			where: { id: applicationId },
 			data: {
-				verificationStatus: payload.status,
-				rejectionReason:
-					payload.status === RecruiterVerificationStatus.REJECTED
-						? (payload.rejectionReason ?? null)
-						: null,
+				status: RecruiterApplicationStatus.REJECTED,
+				rejectionReason: payload.rejectionReason,
+				reviewedById: userId,
+				reviewedAt: new Date(),
 			},
 		});
 
-		if (payload.status === RecruiterVerificationStatus.APPROVED) {
-			await tx.user.update({
-				where: { id: recruiter.userId },
-				data: { status: UserStatus.ACTIVE },
-			});
-		}
+		return {
+			message: "Recruiter application rejected successfully!",
+			data: rejectedApplication,
+		};
+	}
 
-		return updatedProfile;
-	});
+	if (payload.status === RecruiterApplicationStatus.APPROVED) {
+		const result = await prisma.$transaction(async (tx) => {
+			const updatedApp = await tx.recruiterApplication.update({
+				where: { id: applicationId },
+				data: {
+					status: RecruiterApplicationStatus.APPROVED,
+					reviewedById: userId,
+					reviewedAt: new Date(),
+				},
+			});
+
+			const user = await tx.user.findUnique({
+				where: { id: application.applicantId },
+			});
+
+			if (!user) {
+				throw new AppError(httpStatus.NOT_FOUND, "Applicant user not found!");
+			}
+
+			const updatedRoles = Array.from(
+				new Set([...user.roles, UserRole.RECRUITER]),
+			);
+
+			await tx.user.update({
+				where: { id: application.applicantId },
+				data: {
+					roles: updatedRoles,
+				},
+			});
+
+			let recruiterProfile = await tx.recruiterProfile.findUnique({
+				where: { userId: application.applicantId },
+			});
+
+			if (!recruiterProfile) {
+				recruiterProfile = await tx.recruiterProfile.create({
+					data: {
+						userId: application.applicantId,
+					},
+				});
+			}
+
+			const profileVersion = await tx.recruiterProfileVersion.create({
+				data: {
+					recruiterProfileId: recruiterProfile.id,
+					version: 1,
+					fullName: application.fullName,
+					designation: application.designation,
+					companyName: application.companyName,
+					companyWebsite: application.companyWebsite,
+					companySize: application.companySize,
+					businessRegistrationNo: application.businessRegistrationNo,
+					location: application.location,
+					companyLogo: application.companyLogo,
+					companyLogoPublicId: application.companyLogoPublicId,
+				},
+			});
+
+			await tx.recruiterProfile.update({
+				where: { id: recruiterProfile.id },
+				data: {
+					currentVersionId: profileVersion.id,
+				},
+			});
+
+			return updatedApp;
+		});
+
+		return {
+			message: "Recruiter application approved successfully!",
+			data: result,
+		};
+	}
+
+	throw new AppError(httpStatus.BAD_REQUEST, "Invalid status payload provided!");
 };
 
 const updateUserStatus = async (userId: string, status: UserStatus) => {
@@ -111,7 +210,7 @@ const getPlatformStats = async () => {
 	};
 };
 
-export const AdminService = {
+export const adminService = {
 	getPendingRecruiters,
 	verifyRecruiter,
 	updateUserStatus,

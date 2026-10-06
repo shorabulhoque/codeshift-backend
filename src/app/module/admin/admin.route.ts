@@ -2,31 +2,31 @@ import express from "express";
 import { USER_ROLE } from "../../constants/auth.constant";
 import { checkAuth } from "../../middleware/check-auth";
 import validateRequest from "../../middleware/validate-request";
-import { AdminController } from "./admin.controller";
 import { AdminValidation } from "./admin.validation";
+import { adminController } from "./admin.controller";
 
 const router = express.Router();
 
 router.get(
 	"/recruiters/pending",
 	checkAuth(USER_ROLE.ADMIN),
-	AdminController.getPendingRecruiters,
+	adminController.getPendingRecruiters,
 );
 
 router.patch(
 	"/recruiters/:id/verify",
 	checkAuth(USER_ROLE.ADMIN),
 	validateRequest(AdminValidation.verifyRecruiterSchema),
-	AdminController.verifyRecruiter,
+	adminController.verifyRecruiter,
 );
 
 router.patch(
 	"/users/:id/status",
 	checkAuth(USER_ROLE.ADMIN),
 	validateRequest(AdminValidation.updateUserStatusSchema),
-	AdminController.updateUserStatus,
+	adminController.updateUserStatus,
 );
 
-router.get("/stats", checkAuth(USER_ROLE.ADMIN), AdminController.getPlatformStats);
+router.get("/stats", checkAuth(USER_ROLE.ADMIN), adminController.getPlatformStats);
 
 export const AdminRoutes = router;
