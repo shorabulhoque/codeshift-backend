@@ -14,10 +14,13 @@ import type {
 	ILoginPayload,
 	IRegisterPayload,
 	IResetPasswordPayload,
+	ISwitchRolePayload,
 	IVerifyEmailPayload,
 } from "./auth.interface";
 import {
 	AuthProvider,
+	RecruiterApplicationStatus,
+	RecruiterVerificationStatus,
 	UserRole,
 	UserStatus,
 } from "../../../../generated/prisma/enums";
@@ -604,10 +607,10 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 	};
 };
 
-const getMe = async (user: IAuthUser) => {
+const getMe = async (authUser: IAuthUser) => {
 	const result = await prisma.user.findUnique({
 		where: {
-			id: user.userId,
+			id: authUser.userId,
 			isDeleted: false,
 		},
 		select: {
@@ -652,10 +655,10 @@ const getMe = async (user: IAuthUser) => {
 };
 
 const changePassword = async (
-	authUserPayload: IAuthUser,
+	authUser: IAuthUser,
 	changePasswordPayload: IChangePasswordPayload,
 ) => {
-	const { userId } = authUserPayload;
+	const { userId } = authUser;
 	const { oldPassword, newPassword } = changePasswordPayload;
 
 	const user = await prisma.user.findUnique({
@@ -699,6 +702,126 @@ const changePassword = async (
 	};
 };
 
+const switchRole = async (
+	authUser: IAuthUser,
+	payload: ISwitchRolePayload,
+) => {
+	const { userId } = authUser;
+	const { targetRole } = payload;
+
+	const user = await prisma.user.findUnique({
+		where: { id: userId, isDeleted: false },
+		include: {
+			candidateProfile: true,
+			recruiterProfile: {
+				include: {
+					currentVersion: true,
+				},
+			},
+			recruiterApplications: {
+				orderBy: { createdAt: "desc" },
+				take: 1,
+			},
+		},
+	});
+
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User profile not found!");
+	}
+
+	if (!user.isEmailVerified) {
+		throw new AppError(httpStatus.FORBIDDEN, "Please verify your email first.");
+	}
+
+	if (user.status !== UserStatus.ACTIVE) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			`Your account is currently ${user.status.toLowerCase()}.`,
+		);
+	}
+
+	if (user.activeRole === targetRole) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			`You are already in ${targetRole} role!`,
+		);
+	}
+
+	if (targetRole === UserRole.RECRUITER) {
+		const hasRecruiterRole = user.roles.includes(UserRole.RECRUITER);
+		const latestApplication = user.recruiterApplications[0];
+
+		if (!hasRecruiterRole || !user.recruiterProfile) {
+			if (latestApplication?.status === "PENDING") {
+				throw new AppError(
+					httpStatus.BAD_REQUEST,
+					"Your recruiter application is still pending admin review.",
+				);
+			}
+
+			if (latestApplication?.status === "REJECTED") {
+				throw new AppError(
+					httpStatus.FORBIDDEN,
+					"Your recruiter application was rejected. Please re-apply first.",
+				);
+			}
+
+			throw new AppError(
+				httpStatus.FORBIDDEN,
+				"You are not an approved recruiter. Please apply to become a recruiter first.",
+			);
+		}
+	}
+
+	if (targetRole === UserRole.CANDIDATE) {
+		const hasCandidateRole = user.roles.includes(UserRole.CANDIDATE);
+		if (!hasCandidateRole) {
+			throw new AppError(
+				httpStatus.FORBIDDEN,
+				"You do not have candidate role access.",
+			);
+		}
+	}
+
+	const updatedUser = await prisma.user.update({
+		where: { id: userId },
+		data: { activeRole: targetRole },
+	});
+
+	let userFullName = "";
+	if (updatedUser.activeRole === UserRole.CANDIDATE) {
+		userFullName = user.candidateProfile?.fullName || "";
+	} else if (updatedUser.activeRole === UserRole.RECRUITER) {
+		userFullName = user.recruiterProfile?.currentVersion?.fullName || "";
+	}
+
+	const jwtPayload = {
+		userId: user.id,
+		email: user.email,
+		role: user.activeRole,
+		fullName: userFullName,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt.access_secret,
+		{ expiresIn: config.jwt.access_expires_in } as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt.refresh_secret as string,
+		{ expiresIn: config.jwt.refresh_expires_in } as SignOptions,
+	);
+
+	return {
+		message: `Successfully switched role to ${updatedUser.activeRole}`,
+		accessToken,
+		refreshToken,
+		activeRole: updatedUser.activeRole,
+	};
+};
+
 export const authService = {
 	register,
 	verifyEmail,
@@ -709,4 +832,5 @@ export const authService = {
 	resetPassword,
 	getMe,
 	changePassword,
+	switchRole,
 };

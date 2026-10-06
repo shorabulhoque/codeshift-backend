@@ -3,6 +3,7 @@ import validateRequest from "../../middleware/validate-request";
 import { authController } from "./auth.controller";
 import { authValidation } from "./auth.validation";
 import { checkAuth } from "../../middleware/check-auth";
+import { USER_ROLE } from "../../constants/auth.constant";
 
 const router = Router();
 
@@ -52,9 +53,17 @@ router.get(
 
 router.patch(
 	"/change-password",
-	checkAuth(),
+	checkAuth(USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER),
 	validateRequest(authValidation.changePasswordSchema),
 	authController.changePassword,
+);
+
+
+router.post(
+	"/switch-role",
+	checkAuth(USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER),
+	validateRequest(authValidation.switchRoleSchema),
+	authController.switchRole,
 );
 
 export const AuthRoutes = router;

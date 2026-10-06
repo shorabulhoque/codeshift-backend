@@ -1,5 +1,4 @@
-import type { UserRole } from "../../../../generated/prisma/enums";
-
+import { UserRole } from "../../../../generated/prisma/enums";
 export interface IRegisterPayload {
 	email: string;
 	password: string;
@@ -39,4 +38,8 @@ export interface IAuthUser {
 export interface IChangePasswordPayload {
 	oldPassword: string;
 	newPassword: string;
+}
+
+export interface ISwitchRolePayload {
+	targetRole: "CANDIDATE" | "RECRUITER";
 }

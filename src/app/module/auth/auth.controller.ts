@@ -158,8 +158,8 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
-	const user = req.user as IAuthUser;
-	const result = await authService.getMe(user);
+	const authUser = req.user as IAuthUser;
+	const result = await authService.getMe(authUser);
 	const { message, data } = result;
 
 	sendResponse(res, {
@@ -171,8 +171,8 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 const changePassword = catchAsync(async (req: Request, res: Response) => {
-	const user = req.user as IAuthUser;
-	const result = await authService.changePassword(user, req.body);
+	const authUser = req.user as IAuthUser;
+	const result = await authService.changePassword(authUser, req.body);
 	const { message } = result;
 
 	sendResponse(res, {
@@ -180,6 +180,37 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 		success: true,
 		message: message,
 		data: null,
+	});
+});
+
+const switchRole = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user as IAuthUser;
+	const result = await authService.switchRole(user, req.body);
+	const { message, accessToken, refreshToken, activeRole } = result;
+
+	res.cookie("accessToken", accessToken, {
+		httpOnly: true,
+		secure: config.isDevelopment ? false : true,
+		sameSite: config.isDevelopment ? "lax" : "none",
+		maxAge: 1000 * 60 * 15,
+	});
+
+	res.cookie("refreshToken", refreshToken, {
+		httpOnly: true,
+		secure: config.isDevelopment ? false : true,
+		sameSite: config.isDevelopment ? "lax" : "none",
+		maxAge: 1000 * 60 * 60 * 24 * 7,
+	});
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: message,
+		data: {
+			accessToken: accessToken,
+			refreshToken: refreshToken,
+			activeRole: activeRole,
+		},
 	});
 });
 
@@ -193,4 +224,5 @@ export const authController = {
 	resetPassword,
 	getMe,
 	changePassword,
+	switchRole
 };

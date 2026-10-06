@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UserRole } from "../../../../generated/prisma/enums";
 
 const passwordValidation = z
 	.string({ message: "Password is required" })
@@ -91,6 +92,14 @@ const changePasswordSchema = z.object({
 	}),
 });
 
+const switchRoleSchema = z.object({
+	body: z.object({
+		targetRole: z.enum([UserRole.CANDIDATE, UserRole.RECRUITER], {
+			message: "Target role must be either CANDIDATE or RECRUITER",
+		}),
+	}),
+});
+
 export const authValidation = {
 	registerSchema,
 	verifyEmailSchema,
@@ -99,4 +108,5 @@ export const authValidation = {
 	forgotPasswordSchema,
 	resetPasswordSchema,
 	changePasswordSchema,
+	switchRoleSchema,
 };

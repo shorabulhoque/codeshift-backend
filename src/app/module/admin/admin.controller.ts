@@ -18,9 +18,9 @@ const getPendingRecruiters = catchAsync(async (_req: Request, res: Response) => 
 });
 
 const verifyRecruiter = catchAsync(async (req: Request, res: Response) => {
-	const { userId } = req.user as IAuthUser;
+	const authUser = req.user as IAuthUser;
 	const { id } = req.params;
-	const result = await adminService.verifyRecruiter(userId, id as string, req.body);
+	const result = await adminService.verifyRecruiter(authUser, id as string, req.body);
 	const { message, data } = result;
 
 	sendResponse(res, {

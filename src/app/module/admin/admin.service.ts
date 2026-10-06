@@ -6,7 +6,7 @@ import {
 	UserRole,
 	UserStatus,
 } from "../../../../generated/prisma/enums";
-import type { IVerifyRecruiterPayload } from "./admin.interface";
+import type { IAuthUser, IVerifyRecruiterPayload } from "./admin.interface";
 
 const getPendingRecruiters = async () => {
 	const pendingRecruiters = await prisma.recruiterApplication.findMany({
@@ -35,10 +35,11 @@ const getPendingRecruiters = async () => {
 };
 
 const verifyRecruiter = async (
-	userId: string,
+	authUser: IAuthUser,
 	applicationId: string,
 	payload: IVerifyRecruiterPayload,
 ) => {
+	const { userId } = authUser;
 	const application = await prisma.recruiterApplication.findUnique({
 		where: { id: applicationId },
 	});
