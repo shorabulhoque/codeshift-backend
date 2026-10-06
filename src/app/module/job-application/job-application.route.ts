@@ -1,35 +1,35 @@
 import express from "express";
 import { USER_ROLE } from "../../constants/auth.constant";
-import { auth } from "../../middleware/auth";
-import validateRequest from "../../middleware/validateRequest";
-import { ApplicationController } from "./application.controller";
-import { ApplicationValidation } from "./application.validation";
+import { checkAuth } from "../../middleware/check-auth";
+import validateRequest from "../../middleware/validate-request";
+import { ApplicationController } from "./job-application.controller";
+import { ApplicationValidation } from "./job-application.validation";
 
 const router = express.Router();
 
 router.post(
 	"/",
-	auth(USER_ROLE.CANDIDATE),
+	checkAuth(USER_ROLE.CANDIDATE),
 	validateRequest(ApplicationValidation.applyJobSchema),
 	ApplicationController.applyJob,
 );
 router.patch(
 	"/:id/review",
-	auth(USER_ROLE.RECRUITER),
+	checkAuth(USER_ROLE.RECRUITER),
 	validateRequest(ApplicationValidation.reviewApplicationSchema),
 	ApplicationController.reviewApplication,
 );
 
 router.get(
 	"/my-applications",
-	auth(USER_ROLE.CANDIDATE),
+	checkAuth(USER_ROLE.CANDIDATE),
 	ApplicationController.getMyApplications,
 );
 
 router.get(
 	"/job/:jobId",
-	auth(USER_ROLE.RECRUITER),
+	checkAuth(USER_ROLE.RECRUITER),
 	ApplicationController.getJobApplications,
 );
 
-export const ApplicationRoutes = router;
+export const JobApplicationRoutes = router;

@@ -11,7 +11,7 @@ export interface IVerifyEmailPayload {
 	otp: string;
 }
 
-export interface ILoginUserPayload {
+export interface ILoginPayload {
 	email: string;
 	password: string;
 }
@@ -30,7 +30,7 @@ export interface IResetPasswordPayload {
 	newPassword: string;
 }
 
-export interface IAuthUserPayload {
+export interface IAuthUser {
 	userId: string;
 	email: string;
 	role: UserRole;

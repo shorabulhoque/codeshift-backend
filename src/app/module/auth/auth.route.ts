@@ -1,60 +1,59 @@
 import { Router } from "express";
-import validateRequest from "../../middleware/validateRequest";
+import validateRequest from "../../middleware/validate-request";
 import { authController } from "./auth.controller";
 import { authValidation } from "./auth.validation";
-import { auth } from "../../middleware/auth";
-import { USER_ROLE } from "../../constants/auth.constant";
+import { checkAuth } from "../../middleware/check-auth";
 
 const router = Router();
 
 router.post(
 	"/register",
-	validateRequest(authValidation.registerValidationSchema),
+	validateRequest(authValidation.registerSchema),
 	authController.register,
 );
 
 router.post(
 	"/verify-email",
-	validateRequest(authValidation.verifyEmailValidationSchema),
+	validateRequest(authValidation.verifyEmailSchema),
 	authController.verifyEmail,
 );
 
 router.post(
 	"/login",
-	validateRequest(authValidation.loginValidationSchema),
-	authController.loginUser,
+	validateRequest(authValidation.loginSchema),
+	authController.login,
+);
+
+router.post(
+	"/google",
+	validateRequest(authValidation.googleLoginSchema),
+	authController.googleLogin,
 );
 
 router.post("/refresh-token", authController.refreshToken);
 
 router.post(
-	"/google",
-	validateRequest(authValidation.GoogleLoginValidationSchema),
-	authController.googleLogin,
-);
-
-router.post(
 	"/forgot-password",
-	validateRequest(authValidation.forgotPasswordValidationSchema),
+	validateRequest(authValidation.forgotPasswordSchema),
 	authController.forgotPassword,
 );
 
 router.post(
 	"/reset-password",
-	validateRequest(authValidation.resetPasswordValidationSchema),
+	validateRequest(authValidation.resetPasswordSchema),
 	authController.resetPassword,
 );
 
 router.get(
 	"/me",
-	auth(),
+	checkAuth(),
 	authController.getMe,
 );
 
 router.patch(
 	"/change-password",
-	auth(),
-	validateRequest(authValidation.changePasswordValidationSchema),
+	checkAuth(),
+	validateRequest(authValidation.changePasswordSchema),
 	authController.changePassword,
 );
 

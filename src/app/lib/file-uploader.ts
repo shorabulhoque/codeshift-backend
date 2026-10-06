@@ -1,5 +1,5 @@
 import httpStatus from "http-status";
-import AppError from "../errors/AppError";
+import AppError from "../errors/app-error";
 import cloudinary from "./cloudinary";
 
 export const uploadToCloudinary = async (

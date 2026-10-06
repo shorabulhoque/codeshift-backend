@@ -1,12 +1,12 @@
 import httpStatus from "http-status";
-import AppError from "../../errors/AppError";
+import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
 import type { IAuthUser } from "../auth/auth.interface";
 import type { IUpdateCandidateProfile } from "./candidate.interface";
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary,
-} from "../../lib/fileUploader";
+} from "../../lib/file-uploader";
 
 const updateMyProfile = async (
 	authUser: IAuthUser,

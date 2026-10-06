@@ -7,7 +7,7 @@ import type {
 import httpStatus from "http-status";
 import { ZodError } from "zod";
 import config from "../config/index";
-import AppError from "../errors/AppError";
+import AppError from "../errors/app-error";
 import handleZodError, { type TErrorSources } from "../errors/handleZodError";
 
 const globalErrorHandler: ErrorRequestHandler = (

@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
-import catchAsync from "../../utils/catchAsync";
-import sendResponse from "../../utils/sendResponse";
-import { ApplicationService } from "./application.service";
+import catchAsync from "../../utils/catch-async";
+import sendResponse from "../../utils/send-response";
+import { ApplicationService } from "./job-application.service";
 import type { IAuthUser } from "../auth/auth.interface";
 
 const applyJob = catchAsync(async (req: Request, res: Response) => {

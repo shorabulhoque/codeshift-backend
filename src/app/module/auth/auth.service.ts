@@ -2,16 +2,16 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import httpStatus from "http-status";
 import config from "../../config";
-import AppError from "../../errors/AppError";
+import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
 import redisClient from "../../lib/redis";
 import { sendEmailWithTemplate } from "../../lib/email/index";
 import type {
-	IAuthUserPayload,
+	IAuthUser,
 	IChangePasswordPayload,
 	IForgotPasswordPayload,
 	IGoogleLoginPayload,
-	ILoginUserPayload,
+	ILoginPayload,
 	IRegisterPayload,
 	IResetPasswordPayload,
 	IVerifyEmailPayload,
@@ -24,7 +24,7 @@ import {
 import { jwtUtils } from "../../utils/jwt";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import type { TokenPayload } from "google-auth-library";
-import { googleClient } from "../../lib/googleAuth";
+import { googleClient } from "../../lib/google-auth";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 const register = async (payload: IRegisterPayload) => {
@@ -174,7 +174,7 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 	};
 };
 
-const loginUser = async (payload: ILoginUserPayload) => {
+const login = async (payload: ILoginPayload) => {
 	const { email, password } = payload;
 	const normalizedEmail = email.trim().toLowerCase();
 
@@ -258,83 +258,6 @@ const loginUser = async (payload: ILoginUserPayload) => {
 		message: "User logged in successfully!",
 		accessToken,
 		refreshToken,
-	};
-};
-
-const refreshToken = async (token: string) => {
-	const verifiedToken = jwtUtils.verifyToken(
-		token,
-		config.jwt.refresh_secret as string,
-	);
-
-	if (!verifiedToken.success) {
-		throw new AppError(
-			httpStatus.UNAUTHORIZED,
-			"Invalid or expired refresh token!",
-		);
-	}
-
-	const { userId } = verifiedToken.data as JwtPayload;
-
-	const user = await prisma.user.findUnique({
-		where: { id: userId, isDeleted: false },
-		include: {
-			candidateProfile: true,
-			recruiterProfile: {
-				include: {
-					currentVersion: true,
-				},
-			},
-		},
-	});
-
-	if (!user) {
-		throw new AppError(httpStatus.UNAUTHORIZED, "User does not exist!");
-	}
-
-	if (user.status === UserStatus.BLOCKED) {
-		throw new AppError(
-			httpStatus.FORBIDDEN,
-			"Your account has been blocked. Please contact support.",
-		);
-	}
-
-	if (user.status === UserStatus.PENDING) {
-		throw new AppError(
-			httpStatus.FORBIDDEN,
-			"Your account is pending approval or verification.",
-		);
-	}
-
-	let userFullName = "";
-	if (user.activeRole === UserRole.CANDIDATE) {
-		userFullName = user.candidateProfile?.fullName || "";
-	} else if (user.activeRole === UserRole.RECRUITER) {
-		userFullName = user.recruiterProfile?.currentVersion?.fullName || "";
-	}
-
-	const jwtPayload = {
-		userId: user.id,
-		email: user.email,
-		role: user.activeRole,
-		fullName: userFullName,
-	};
-
-	const newAccessToken = jwtUtils.createToken(
-		jwtPayload,
-		config.jwt.access_secret,
-		{ expiresIn: config.jwt.access_expires_in } as SignOptions,
-	);
-	const newRefreshToken = jwtUtils.createToken(
-		jwtPayload,
-		config.jwt.refresh_secret,
-		{ expiresIn: config.jwt.refresh_expires_in } as SignOptions,
-	);
-
-	return {
-		message: "Access token refreshed successfully!",
-		accessToken: newAccessToken,
-		refreshToken: newRefreshToken
 	};
 };
 
@@ -491,6 +414,83 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 	};
 };
 
+const refreshToken = async (token: string) => {
+	const verifiedToken = jwtUtils.verifyToken(
+		token,
+		config.jwt.refresh_secret as string,
+	);
+
+	if (!verifiedToken.success) {
+		throw new AppError(
+			httpStatus.UNAUTHORIZED,
+			"Invalid or expired refresh token!",
+		);
+	}
+
+	const { userId } = verifiedToken.data as JwtPayload;
+
+	const user = await prisma.user.findUnique({
+		where: { id: userId, isDeleted: false },
+		include: {
+			candidateProfile: true,
+			recruiterProfile: {
+				include: {
+					currentVersion: true,
+				},
+			},
+		},
+	});
+
+	if (!user) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "User does not exist!");
+	}
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"Your account has been blocked. Please contact support.",
+		);
+	}
+
+	if (user.status === UserStatus.PENDING) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"Your account is pending approval or verification.",
+		);
+	}
+
+	let userFullName = "";
+	if (user.activeRole === UserRole.CANDIDATE) {
+		userFullName = user.candidateProfile?.fullName || "";
+	} else if (user.activeRole === UserRole.RECRUITER) {
+		userFullName = user.recruiterProfile?.currentVersion?.fullName || "";
+	}
+
+	const jwtPayload = {
+		userId: user.id,
+		email: user.email,
+		role: user.activeRole,
+		fullName: userFullName,
+	};
+
+	const newAccessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt.access_secret,
+		{ expiresIn: config.jwt.access_expires_in } as SignOptions,
+	);
+	const newRefreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt.refresh_secret,
+		{ expiresIn: config.jwt.refresh_expires_in } as SignOptions,
+	);
+
+	return {
+		message: "Access token refreshed successfully!",
+		accessToken: newAccessToken,
+		refreshToken: newRefreshToken
+	};
+};
+
 const forgotPassword = async (payload: IForgotPasswordPayload) => {
 	const normalizedEmail = payload.email.trim().toLowerCase();
 
@@ -604,7 +604,7 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 	};
 };
 
-const getMe = async (user: IAuthUserPayload) => {
+const getMe = async (user: IAuthUser) => {
 	const result = await prisma.user.findUnique({
 		where: {
 			id: user.userId,
@@ -652,7 +652,7 @@ const getMe = async (user: IAuthUserPayload) => {
 };
 
 const changePassword = async (
-	authUserPayload: IAuthUserPayload,
+	authUserPayload: IAuthUser,
 	changePasswordPayload: IChangePasswordPayload,
 ) => {
 	const { userId } = authUserPayload;
@@ -702,9 +702,9 @@ const changePassword = async (
 export const authService = {
 	register,
 	verifyEmail,
-	loginUser,
-	refreshToken,
+	login,
 	googleLogin,
+	refreshToken,
 	forgotPassword,
 	resetPassword,
 	getMe,

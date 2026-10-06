@@ -2,13 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import type { JwtPayload } from "jsonwebtoken";
 import config from "../config";
-import AppError from "../errors/AppError";
+import AppError from "../errors/app-error";
 import { prisma } from "../lib/prisma";
-import catchAsync from "../utils/catchAsync";
+import catchAsync from "../utils/catch-async";
 import { jwtUtils } from "../utils/jwt";
 import { UserStatus } from "../../../generated/prisma/enums";
 
-export const auth = (...requiredRoles: string[]) => {
+export const checkAuth = (...requiredRoles: string[]) => {
 	return catchAsync(async (req: Request, _res: Response, next: NextFunction) => {
 		const token = req.cookies?.accessToken
 			? req.cookies.accessToken

@@ -2,10 +2,10 @@ import cors from "cors";
 import express from "express";
 import type { Application, Request, Response } from "express";
 import httpStatus from "http-status";
-import config from "./config";
 import cookieParser from "cookie-parser";
-import globalErrorHandler from "./middleware/globalErrorHandler";
-import notFound from "./middleware/notFound";
+import globalErrorHandler from "./middleware/global-error-handler";
+import notFound from "./middleware/not-found";
+import config from "./config";
 import router from "./routes";
 
 const app: Application = express();

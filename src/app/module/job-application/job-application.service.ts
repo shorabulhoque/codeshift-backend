@@ -1,5 +1,5 @@
 import httpStatus from "http-status";
-import AppError from "../../errors/AppError";
+import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
 import type { ApplicationStatus } from "../../../../generated/prisma/enums";
 import { sendEmailWithTemplate } from "../../lib/email/index";

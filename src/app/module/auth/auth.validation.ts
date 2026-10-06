@@ -9,7 +9,7 @@ const passwordValidation = z
 	.regex(/[0-9]/, "Password must contain at least 1 number")
 	.regex(/[^A-Za-z0-9]/, "Password must contain at least 1 special character");
 
-export const registerValidationSchema = z.object({
+const registerSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -24,7 +24,7 @@ export const registerValidationSchema = z.object({
 	}),
 });
 
-export const verifyEmailValidationSchema = z.object({
+const verifyEmailSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -35,7 +35,7 @@ export const verifyEmailValidationSchema = z.object({
 	}),
 });
 
-const loginValidationSchema = z.object({
+const loginSchema = z.object({
 	body: z.object({
 		email: z
 			.string({
@@ -50,7 +50,7 @@ const loginValidationSchema = z.object({
 	}),
 });
 
-const GoogleLoginValidationSchema = z.object({
+const googleLoginSchema = z.object({
 	body: z.object({
 		idToken: z.string({
 			message: "Google ID Token is required",
@@ -58,7 +58,7 @@ const GoogleLoginValidationSchema = z.object({
 	}),
 });
 
-const forgotPasswordValidationSchema = z.object({
+const forgotPasswordSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -66,7 +66,7 @@ const forgotPasswordValidationSchema = z.object({
 	}),
 });
 
-const resetPasswordValidationSchema = z.object({
+const resetPasswordSchema = z.object({
 	body: z.object({
 		email: z
 			.string({ message: "Email is required" })
@@ -81,7 +81,7 @@ const resetPasswordValidationSchema = z.object({
 	}),
 });
 
-const changePasswordValidationSchema = z.object({
+const changePasswordSchema = z.object({
 	body: z.object({
 		oldPassword: z.string({ message: "Old password is required" }),
 		newPassword: z
@@ -92,11 +92,11 @@ const changePasswordValidationSchema = z.object({
 });
 
 export const authValidation = {
-	registerValidationSchema,
-	verifyEmailValidationSchema,
-	loginValidationSchema,
-	GoogleLoginValidationSchema,
-	forgotPasswordValidationSchema,
-	resetPasswordValidationSchema,
-	changePasswordValidationSchema,
+	registerSchema,
+	verifyEmailSchema,
+	loginSchema,
+	googleLoginSchema,
+	forgotPasswordSchema,
+	resetPasswordSchema,
+	changePasswordSchema,
 };
