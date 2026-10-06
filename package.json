@@ -5,6 +5,7 @@
   "description": "A production-grade, secure RESTful API for a Developer Assessment Platform built with Node.js, TypeScript, Express, and PostgreSQL using Prisma ORM. Features robust role-based access control (RBAC) for Admins, Recruiters, and Candidates, automated code submission validation frameworks, GCP Social Login, real payment gateway integration (Stripe/bKash/SSLCommerz), secure data parsing using Zod, and optimized caching via Redis.",
   "main": "src/server.ts",
   "scripts": {
+    "db:seed:admin": "tsx src/app/utils/seed/admin.seed.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsup",
     "start": "node dist/server.js",

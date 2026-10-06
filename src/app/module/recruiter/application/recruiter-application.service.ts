@@ -13,7 +13,6 @@ const createApplication = async (
     payload: ICreateRecruiterApplicationPayload,
     file?: Express.Multer.File,
 ) => {
-    console.log(user.userId);
     const existingUser = await prisma.user.findUnique({
         where: { id: user.userId, isDeleted: false },
     });
