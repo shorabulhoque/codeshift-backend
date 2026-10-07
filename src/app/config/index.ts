@@ -69,7 +69,8 @@ export default {
 
 	email: {
 		provider: process.env.EMAIL_PROVIDER || "nodemailer",
-		sender: process.env.EMAIL_SENDER || "CodeShift Support <no-reply@codeshift.com>",
+		sender:
+			process.env.EMAIL_SENDER || "CodeShift Support <no-reply@codeshift.com>",
 		resend_api_key: process.env.RESEND_API_KEY!,
 		smtp: {
 			host: process.env.SMTP_HOST || "smtp-relay.brevo.com",

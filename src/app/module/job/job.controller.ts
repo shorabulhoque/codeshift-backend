@@ -2,12 +2,12 @@ import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import catchAsync from "../../utils/catch-async";
 import sendResponse from "../../utils/send-response";
-import { JobService } from "./job.service";
+import { jobService } from "./job.service";
 import type { IAuthUser } from "../auth/auth.interface";
 
 const createJob = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUser;
-	const result = await JobService.createJob(user.userId, req.body);
+	const result = await jobService.createJob(user, req.body);
 	const { message, data } = result;
 
 	sendResponse(res, {
@@ -19,7 +19,7 @@ const createJob = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllJobs = catchAsync(async (req: Request, res: Response) => {
-	const result = await JobService.getAllJobs(req.query);
+	const result = await jobService.getAllJobs(req.query);
 	const { message, meta, data } = result;
 
 	sendResponse(res, {
@@ -33,7 +33,7 @@ const getAllJobs = catchAsync(async (req: Request, res: Response) => {
 
 const getMyJobs = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUser;
-	const result = await JobService.getMyJobs(user.userId);
+	const result = await jobService.getMyJobs(user.userId);
 	const { message, data } = result;
 
 	sendResponse(res, {
@@ -44,4 +44,4 @@ const getMyJobs = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-export const JobController = { createJob, getAllJobs, getMyJobs };
+export const jobController = { createJob, getAllJobs, getMyJobs };

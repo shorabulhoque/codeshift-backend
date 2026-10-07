@@ -27,7 +27,7 @@ const updateJobSchema = z.object({
 	}),
 });
 
-export const JobValidation = {
+export const jobValidation = {
 	createJobSchema,
 	updateJobSchema,
 };

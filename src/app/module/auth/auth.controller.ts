@@ -54,7 +54,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
 		message: message,
 		data: {
 			refreshToken,
-			accessToken
+			accessToken,
 		},
 	});
 });
@@ -91,7 +91,6 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
 	let token = req.cookies?.refreshToken;
 
-
 	if (!token && req.headers.authorization) {
 		token = req.headers.authorization.startsWith("Bearer ")
 			? req.headers.authorization.split(" ")[1]
@@ -106,7 +105,11 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 	}
 
 	const result = await authService.refreshToken(token);
-	const { message, accessToken: newAccessToken, refreshToken: newRefreshToken } = result;
+	const {
+		message,
+		accessToken: newAccessToken,
+		refreshToken: newRefreshToken,
+	} = result;
 
 	res.cookie("accessToken", newAccessToken, {
 		httpOnly: true,
@@ -224,5 +227,5 @@ export const authController = {
 	resetPassword,
 	getMe,
 	changePassword,
-	switchRole
+	switchRole,
 };

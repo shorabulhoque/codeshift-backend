@@ -32,7 +32,7 @@ const moduleRoutes: { path: string; route: Router }[] = [
 	},
 	{
 		path: "/job-applications",
-		route: JobApplicationRoutes
+		route: JobApplicationRoutes,
 	},
 	{
 		path: "/payments",

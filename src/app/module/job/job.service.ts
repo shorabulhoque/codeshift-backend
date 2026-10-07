@@ -1,10 +1,11 @@
 import httpStatus from "http-status";
 import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
-import type { ICreateJobPayload } from "./job.interface";
-import type { Prisma } from "../../../../generated/prisma/client";
+import type { IAuthUser, ICreateJobPayload } from "./job.interface";
+import { type Prisma } from "../../../../generated/prisma/client";
 
-const createJob = async (userId: string, payload: ICreateJobPayload) => {
+const createJob = async (authUser: IAuthUser, payload: ICreateJobPayload) => {
+	const { userId } = authUser;
 	const recruiter = await prisma.recruiterProfile.findUnique({
 		where: { userId },
 	});
@@ -43,9 +44,7 @@ const getAllJobs = async (query: Record<string, unknown>) => {
 	const limitNumber = Number(limit) || 10;
 	const skip = (pageNumber - 1) * limitNumber;
 
-	const andConditions: Prisma.JobWhereInput[] = [
-		{ status: "PUBLISHED" },
-	];
+	const andConditions: Prisma.JobWhereInput[] = [{ status: "PUBLISHED" }];
 
 	if (searchTerm) {
 		andConditions.push({
@@ -136,7 +135,7 @@ const getMyJobs = async (recruiterUserId: string) => {
 	return {
 		message: "My posted jobs retrieved successfully!",
 		data: result,
-	}
+	};
 };
 
-export const JobService = { createJob, getAllJobs, getMyJobs };
+export const jobService = { createJob, getAllJobs, getMyJobs };

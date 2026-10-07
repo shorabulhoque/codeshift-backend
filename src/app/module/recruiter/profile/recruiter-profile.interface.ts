@@ -3,11 +3,11 @@ import type { UserRole } from "../../../../../generated/prisma/enums";
 import type { recruiterProfileValidation } from "./recruiter-profile.validation";
 
 export interface IAuthUser {
-    userId: string;
-    email: string;
-    role: UserRole;
+	userId: string;
+	email: string;
+	role: UserRole;
 }
 
 export type IUpdateRecruiterProfile = z.infer<
-    typeof recruiterProfileValidation.updateMyProfileSchema
+	typeof recruiterProfileValidation.updateMyProfileSchema
 >["body"];

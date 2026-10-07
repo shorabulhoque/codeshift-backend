@@ -170,7 +170,7 @@ const getCandidateById = async (id: string) => {
 			avatarPublicId: true,
 			createdAt: true,
 			updatedAt: true,
-		}
+		},
 	});
 
 	if (!profile) {
@@ -243,7 +243,7 @@ const deleteResume = async (authUser: IAuthUser) => {
 
 	return {
 		message: "Resume removed successfully!",
-		data: updatedProfile
+		data: updatedProfile,
 	};
 };
 

@@ -2,7 +2,11 @@ import { z } from "zod";
 
 const updateProfileSchema = z.object({
 	body: z.object({
-		fullName: z.string().trim().min(2, "Full name must be at least 2 characters").optional(),
+		fullName: z
+			.string()
+			.trim()
+			.min(2, "Full name must be at least 2 characters")
+			.optional(),
 		phone: z.string().trim().optional().or(z.literal("")),
 		headline: z
 			.string()
@@ -10,7 +14,12 @@ const updateProfileSchema = z.object({
 			.max(100, "Headline cannot exceed 100 characters")
 			.optional()
 			.or(z.literal("")),
-		bio: z.string().trim().max(500, "Bio cannot exceed 500 characters").optional().or(z.literal("")),
+		bio: z
+			.string()
+			.trim()
+			.max(500, "Bio cannot exceed 500 characters")
+			.optional()
+			.or(z.literal("")),
 		experienceYears: z
 			.number({ message: "Experience years must be a number" })
 			.min(0, "Experience years cannot be negative")

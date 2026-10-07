@@ -2,62 +2,69 @@ import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import catchAsync from "../../utils/catch-async";
 import sendResponse from "../../utils/send-response";
-import { ApplicationService } from "./job-application.service";
-import type { IAuthUser } from "../auth/auth.interface";
+import { jobApplicationService } from "./job-application.service";
+import type { IAuthUser } from "./job-application.interface";
 
 const applyJob = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUser;
-	const result = await ApplicationService.applyJob(user.userId, req.body);
+	const result = await jobApplicationService.applyJob(user, req.body);
+	const { message, data } = result;
+
 	sendResponse(res, {
 		statusCode: httpStatus.CREATED,
 		success: true,
-		message: "Applied and code submitted successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 
 const reviewApplication = catchAsync(async (req: Request, res: Response) => {
 	const { id } = req.params;
-	const result = await ApplicationService.reviewApplication(
+	const result = await jobApplicationService.reviewApplication(
 		id as string,
 		req.body,
 	);
+	const { message, data } = result;
+
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Application reviewed successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 
 const getMyApplications = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUser;
-	const result = await ApplicationService.getMyApplications(user.userId);
+	const result = await jobApplicationService.getMyApplications(user);
+	const { message, data } = result;
+
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "My applications retrieved successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 
 const getJobApplications = catchAsync(async (req: Request, res: Response) => {
 	const { jobId } = req.params;
 	const user = req.user as IAuthUser;
-	const result = await ApplicationService.getJobApplications(
-		user.userId,
+	const result = await jobApplicationService.getJobApplications(
+		user,
 		jobId as string,
 	);
+	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Job applications retrieved successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 
-export const ApplicationController = {
+export const jobApplicationController = {
 	applyJob,
 	reviewApplication,
 	getMyApplications,

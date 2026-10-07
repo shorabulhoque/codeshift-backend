@@ -1,36 +1,40 @@
 import httpStatus from "http-status";
 import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
-import type { ApplicationStatus } from "../../../../generated/prisma/enums";
 import { sendEmailWithTemplate } from "../../lib/email/index";
+import type {
+	IAuthUser,
+	IApplyJobPayload,
+	IReviewApplicationPayload,
+} from "./job-application.interface";
+import type { ApplicationStatus } from "../../../../generated/prisma/enums";
 
-const applyJob = async (
-	userId: string,
-	payload: { jobId: string; submissionCode: string },
-) => {
+const applyJob = async (authUser: IAuthUser, payload: IApplyJobPayload) => {
 	const candidate = await prisma.candidateProfile.findUnique({
-		where: { userId },
+		where: { userId: authUser.userId },
 	});
-	if (!candidate)
-		throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found!");
 
-	return await prisma.jobApplication.create({
+	if (!candidate) {
+		throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found!");
+	}
+
+	const result = await prisma.jobApplication.create({
 		data: {
 			jobId: payload.jobId,
 			candidateId: candidate.id,
 			submissionCode: payload.submissionCode,
 		},
 	});
+
+	return {
+		message: "Applied and code submitted successfully!",
+		data: result,
+	};
 };
 
 const reviewApplication = async (
 	applicationId: string,
-	payload: {
-		marks?: number;
-		reviewerFeedback?: string;
-		interviewDate?: string;
-		status?: ApplicationStatus;
-	},
+	payload: IReviewApplicationPayload,
 ) => {
 	const application = await prisma.jobApplication.findUnique({
 		where: { id: applicationId },
@@ -42,7 +46,13 @@ const reviewApplication = async (
 			},
 			job: {
 				include: {
-					recruiter: { select: { companyName: true } },
+					recruiter: {
+						select: {
+							currentVersion: {
+								select: { companyName: true },
+							},
+						},
+					},
 				},
 			},
 		},
@@ -76,6 +86,9 @@ const reviewApplication = async (
 			? new Date(updateData.interviewDate).toLocaleString()
 			: "To be announced";
 
+		const companyName =
+			application.job.recruiter.currentVersion?.companyName ?? "N/A";
+
 		await sendEmailWithTemplate(
 			application.candidate.user.email,
 			`Interview Invitation for ${application.job.title}`,
@@ -83,7 +96,7 @@ const reviewApplication = async (
 			{
 				candidateName: application.candidate.fullName,
 				jobTitle: application.job.title,
-				companyName: application.job.recruiter.companyName,
+				companyName,
 				marks: updateData.marks ?? application.marks ?? "N/A",
 				reviewerFeedback:
 					updateData.reviewerFeedback ?? application.reviewerFeedback ?? "N/A",
@@ -92,17 +105,22 @@ const reviewApplication = async (
 		);
 	}
 
-	return updatedApplication;
+	return {
+		message: "Application reviewed successfully!",
+		data: updatedApplication,
+	};
 };
 
-const getMyApplications = async (userId: string) => {
+const getMyApplications = async (authUser: IAuthUser) => {
 	const candidate = await prisma.candidateProfile.findUnique({
-		where: { userId },
+		where: { userId: authUser.userId },
 	});
-	if (!candidate)
-		throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found!");
 
-	return await prisma.jobApplication.findMany({
+	if (!candidate) {
+		throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found!");
+	}
+
+	const applications = await prisma.jobApplication.findMany({
 		where: { candidateId: candidate.id },
 		include: {
 			job: {
@@ -114,9 +132,13 @@ const getMyApplications = async (userId: string) => {
 					deadline: true,
 					recruiter: {
 						select: {
-							companyName: true,
-							companyLogo: true,
-							location: true,
+							currentVersion: {
+								select: {
+									companyName: true,
+									companyLogo: true,
+									location: true,
+								},
+							},
 						},
 					},
 				},
@@ -124,11 +146,16 @@ const getMyApplications = async (userId: string) => {
 		},
 		orderBy: { createdAt: "desc" },
 	});
+
+	return {
+		message: "My applications retrieved successfully!",
+		data: applications,
+	};
 };
 
-const getJobApplications = async (recruiterUserId: string, jobId: string) => {
+const getJobApplications = async (authUser: IAuthUser, jobId: string) => {
 	const recruiter = await prisma.recruiterProfile.findUnique({
-		where: { userId: recruiterUserId },
+		where: { userId: authUser.userId },
 	});
 
 	if (!recruiter) {
@@ -149,7 +176,7 @@ const getJobApplications = async (recruiterUserId: string, jobId: string) => {
 		);
 	}
 
-	return await prisma.jobApplication.findMany({
+	const applications = await prisma.jobApplication.findMany({
 		where: { jobId },
 		include: {
 			candidate: {
@@ -172,9 +199,14 @@ const getJobApplications = async (recruiterUserId: string, jobId: string) => {
 		},
 		orderBy: { createdAt: "desc" },
 	});
+
+	return {
+		message: "Job applications retrieved successfully!",
+		data: applications,
+	};
 };
 
-export const ApplicationService = {
+export const jobApplicationService = {
 	applyJob,
 	reviewApplication,
 	getMyApplications,

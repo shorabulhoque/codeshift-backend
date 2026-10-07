@@ -46,7 +46,10 @@ const verifyRecruiter = async (
 	});
 
 	if (!application) {
-		throw new AppError(httpStatus.NOT_FOUND, "Recruiter Application not found!");
+		throw new AppError(
+			httpStatus.NOT_FOUND,
+			"Recruiter Application not found!",
+		);
 	}
 
 	if (application.status === RecruiterApplicationStatus.APPROVED) {
@@ -161,7 +164,10 @@ const verifyRecruiter = async (
 		};
 	}
 
-	throw new AppError(httpStatus.BAD_REQUEST, "Invalid status payload provided!");
+	throw new AppError(
+		httpStatus.BAD_REQUEST,
+		"Invalid status payload provided!",
+	);
 };
 
 const updateUserStatus = async (userId: string, status: UserStatus) => {
@@ -191,7 +197,6 @@ const updateUserStatus = async (userId: string, status: UserStatus) => {
 		data: updatedUser,
 	};
 };
-
 
 const getPlatformStats = async () => {
 	const [

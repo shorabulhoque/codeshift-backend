@@ -35,9 +35,10 @@ router.patch(
 	candidateController.updateResume,
 );
 
-router.get("/:id",
+router.get(
+	"/:id",
 	checkAuth(USER_ROLE.RECRUITER, USER_ROLE.ADMIN),
-	candidateController.getCandidateById
+	candidateController.getCandidateById,
 );
 
 router.delete(

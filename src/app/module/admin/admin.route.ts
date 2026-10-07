@@ -27,6 +27,10 @@ router.patch(
 	adminController.updateUserStatus,
 );
 
-router.get("/stats", checkAuth(USER_ROLE.ADMIN), adminController.getPlatformStats);
+router.get(
+	"/stats",
+	checkAuth(USER_ROLE.ADMIN),
+	adminController.getPlatformStats,
+);
 
 export const AdminRoutes = router;

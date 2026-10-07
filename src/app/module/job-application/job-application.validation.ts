@@ -17,7 +17,7 @@ const reviewApplicationSchema = z.object({
 	}),
 });
 
-export const ApplicationValidation = {
+export const jobApplicationValidation = {
 	applyJobSchema,
 	reviewApplicationSchema,
 };

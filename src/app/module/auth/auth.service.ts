@@ -47,10 +47,7 @@ const register = async (payload: IRegisterPayload) => {
 		);
 	}
 
-	const hashedPassword = await bcrypt.hash(
-		password,
-		config.bcrypt_salt_rounds,
-	);
+	const hashedPassword = await bcrypt.hash(password, config.bcrypt_salt_rounds);
 
 	const otp = crypto.randomInt(100000, 1000000).toString();
 
@@ -119,7 +116,10 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 	});
 
 	if (existingUser) {
-		throw new AppError(httpStatus.CONFLICT, "User already exists with this email",);
+		throw new AppError(
+			httpStatus.CONFLICT,
+			"User already exists with this email",
+		);
 	}
 
 	const result = await prisma.$transaction(async (tx) => {
@@ -345,7 +345,8 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 			});
 		} else {
 			const hasGoogleAccount = existingUser.accounts.some(
-				(acc: { provider: AuthProvider }) => acc.provider === AuthProvider.GOOGLE,
+				(acc: { provider: AuthProvider }) =>
+					acc.provider === AuthProvider.GOOGLE,
 			);
 
 			if (!hasGoogleAccount) {
@@ -490,7 +491,7 @@ const refreshToken = async (token: string) => {
 	return {
 		message: "Access token refreshed successfully!",
 		accessToken: newAccessToken,
-		refreshToken: newRefreshToken
+		refreshToken: newRefreshToken,
 	};
 };
 
@@ -603,7 +604,8 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 	);
 
 	return {
-		message: "Password reset successfully. You can now login with your new password.",
+		message:
+			"Password reset successfully. You can now login with your new password.",
 	};
 };
 
@@ -702,10 +704,7 @@ const changePassword = async (
 	};
 };
 
-const switchRole = async (
-	authUser: IAuthUser,
-	payload: ISwitchRolePayload,
-) => {
+const switchRole = async (authUser: IAuthUser, payload: ISwitchRolePayload) => {
 	const { userId } = authUser;
 	const { targetRole } = payload;
 

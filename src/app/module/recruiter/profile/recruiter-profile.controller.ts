@@ -19,50 +19,50 @@ import sendResponse from "../../../utils/send-response";
 // });
 
 const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
-    const user = req.user as IAuthUser;
-    const result = await recruiterProfileService.updateMyProfile(user, req.body);
-    const { message, data } = result;
+	const user = req.user as IAuthUser;
+	const result = await recruiterProfileService.updateMyProfile(user, req.body);
+	const { message, data } = result;
 
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message,
-        data,
-    });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message,
+		data,
+	});
 });
 
 const updateCompanyLogo = catchAsync(async (req: Request, res: Response) => {
-    const user = req.user as IAuthUser;
-    const result = await recruiterProfileService.updateCompanyLogo(
-        user,
-        req.file,
-    );
-    const { message, data } = result;
+	const user = req.user as IAuthUser;
+	const result = await recruiterProfileService.updateCompanyLogo(
+		user,
+		req.file,
+	);
+	const { message, data } = result;
 
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message,
-        data,
-    });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message,
+		data,
+	});
 });
 
 const deleteCompanyLogo = catchAsync(async (req: Request, res: Response) => {
-    const user = req.user as IAuthUser;
-    const result = await recruiterProfileService.deleteCompanyLogo(user);
-    const { message, data } = result;
+	const user = req.user as IAuthUser;
+	const result = await recruiterProfileService.deleteCompanyLogo(user);
+	const { message, data } = result;
 
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message,
-        data,
-    });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message,
+		data,
+	});
 });
 
 export const recruiterProfileController = {
-    // getMyProfile,
-    updateMyProfile,
-    updateCompanyLogo,
-    deleteCompanyLogo,
+	// getMyProfile,
+	updateMyProfile,
+	updateCompanyLogo,
+	deleteCompanyLogo,
 };

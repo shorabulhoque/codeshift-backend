@@ -6,36 +6,37 @@ import { recruiterApplicationService } from "./recruiter-application.service";
 import type { IAuthUser } from "./recruiter-application.interface";
 
 const createApplication = catchAsync(async (req: Request, res: Response) => {
-    const user = req.user as IAuthUser;
-    const file = req.file;
+	const user = req.user as IAuthUser;
+	const file = req.file;
 
-    const { message, data } = await recruiterApplicationService.createApplication(
-        user,
-        req.body,
-        file,
-    );
+	const { message, data } = await recruiterApplicationService.createApplication(
+		user,
+		req.body,
+		file,
+	);
 
-    sendResponse(res, {
-        statusCode: httpStatus.CREATED,
-        success: true,
-        message,
-        data,
-    });
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message,
+		data,
+	});
 });
 
 const getMyApplication = catchAsync(async (req: Request, res: Response) => {
-    const user = req.user as IAuthUser;
-    const { message, data } = await recruiterApplicationService.getMyApplication(user);
+	const user = req.user as IAuthUser;
+	const { message, data } =
+		await recruiterApplicationService.getMyApplication(user);
 
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message,
-        data,
-    });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message,
+		data,
+	});
 });
 
 export const recruiterApplicationController = {
-    createApplication,
-    getMyApplication,
+	createApplication,
+	getMyApplication,
 };

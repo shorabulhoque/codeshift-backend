@@ -15,23 +15,23 @@ const router = express.Router();
 // );
 
 router.patch(
-    "/me",
-    checkAuth(USER_ROLE.RECRUITER),
-    validateRequest(recruiterProfileValidation.updateMyProfileSchema),
-    recruiterProfileController.updateMyProfile,
+	"/me",
+	checkAuth(USER_ROLE.RECRUITER),
+	validateRequest(recruiterProfileValidation.updateMyProfileSchema),
+	recruiterProfileController.updateMyProfile,
 );
 
 router.patch(
-    "/me/logo",
-    checkAuth(USER_ROLE.RECRUITER),
-    upload.single("logo"),
-    recruiterProfileController.updateCompanyLogo,
+	"/me/logo",
+	checkAuth(USER_ROLE.RECRUITER),
+	upload.single("logo"),
+	recruiterProfileController.updateCompanyLogo,
 );
 
 router.delete(
-    "/me/logo",
-    checkAuth(USER_ROLE.RECRUITER),
-    recruiterProfileController.deleteCompanyLogo,
+	"/me/logo",
+	checkAuth(USER_ROLE.RECRUITER),
+	recruiterProfileController.deleteCompanyLogo,
 );
 
 export const RecruiterProfileRoutes = router;

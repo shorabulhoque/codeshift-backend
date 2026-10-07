@@ -5,17 +5,19 @@ import sendResponse from "../../utils/send-response";
 import { adminService } from "./admin.service";
 import type { IAuthUser } from "./admin.interface";
 
-const getPendingRecruiters = catchAsync(async (_req: Request, res: Response) => {
-	const result = await adminService.getPendingRecruiters();
-	const { message, data } = result;
+const getPendingRecruiters = catchAsync(
+	async (_req: Request, res: Response) => {
+		const result = await adminService.getPendingRecruiters();
+		const { message, data } = result;
 
-	sendResponse(res, {
-		statusCode: httpStatus.OK,
-		success: true,
-		message,
-		data,
-	});
-});
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message,
+			data,
+		});
+	},
+);
 
 const verifyRecruiter = catchAsync(async (req: Request, res: Response) => {
 	const authUser = req.user as IAuthUser;

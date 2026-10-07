@@ -45,11 +45,7 @@ router.post(
 	authController.resetPassword,
 );
 
-router.get(
-	"/me",
-	checkAuth(),
-	authController.getMe,
-);
+router.get("/me", checkAuth(), authController.getMe);
 
 router.patch(
 	"/change-password",
@@ -57,7 +53,6 @@ router.patch(
 	validateRequest(authValidation.changePasswordSchema),
 	authController.changePassword,
 );
-
 
 router.post(
 	"/switch-role",
