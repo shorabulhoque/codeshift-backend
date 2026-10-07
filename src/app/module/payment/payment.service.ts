@@ -5,10 +5,11 @@ import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import type Stripe from "stripe";
 import { sendEmailWithTemplate } from "../../lib/email/index";
+import type { IAuthUser } from "./payment.interface";
 
-const createPaymentSession = async (userId: string, amount: number) => {
+const createCheckoutSession = async (authUser: IAuthUser, amount = 20) => {
 	const recruiter = await prisma.recruiterProfile.findUnique({
-		where: { userId },
+		where: { userId: authUser.userId },
 		include: { user: true },
 	});
 
@@ -51,8 +52,11 @@ const createPaymentSession = async (userId: string, amount: number) => {
 	});
 
 	return {
-		payment,
-		paymentUrl: session.url,
+		message: "Payment checkout session created successfully!",
+		data: {
+			payment,
+			paymentUrl: session.url,
+		},
 	};
 };
 
@@ -87,6 +91,9 @@ const handleStripeWebhook = async (payload: Buffer, signature: string) => {
 					recruiter: {
 						include: {
 							user: { select: { email: true } },
+							currentVersion: {
+								select: { companyName: true, fullName: true },
+							},
 						},
 					},
 				},
@@ -99,14 +106,19 @@ const handleStripeWebhook = async (payload: Buffer, signature: string) => {
 					day: "numeric",
 				});
 
+				const companyName =
+					updatedPayment.recruiter.currentVersion?.companyName ?? "N/A";
+				const recruiterName =
+					updatedPayment.recruiter.currentVersion?.fullName ?? "Recruiter";
+
 				await sendEmailWithTemplate(
 					updatedPayment.recruiter.user.email,
 					`Payment Receipt - Invoice #${transactionId.slice(-8)}`,
 					"paymentInvoiceEmail",
 					{
 						transactionId: updatedPayment.transactionId,
-						recruiterName: updatedPayment.recruiter.companyName,
-						companyName: updatedPayment.recruiter.companyName,
+						recruiterName,
+						companyName,
 						recruiterEmail: updatedPayment.recruiter.user.email,
 						paymentDate: paymentDateFormatted,
 						amount: updatedPayment.amount,
@@ -116,6 +128,11 @@ const handleStripeWebhook = async (payload: Buffer, signature: string) => {
 			}
 		}
 	}
+
+	return {
+		message: "Webhook processed successfully!",
+		data: null,
+	};
 };
 
-export const PaymentService = { createPaymentSession, handleStripeWebhook };
+export const paymentService = { createCheckoutSession, handleStripeWebhook };
