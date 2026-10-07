@@ -186,7 +186,10 @@ const updateUserStatus = async (userId: string, status: UserStatus) => {
 		},
 	});
 
-	return updatedUser;
+	return {
+		message: `User status updated to ${status} successfully!`,
+		data: updatedUser,
+	};
 };
 
 
@@ -216,14 +219,17 @@ const getPlatformStats = async () => {
 	]);
 
 	return {
-		totalUsers,
-		totalRecruiters,
-		totalCandidates,
-		pendingRecruiterApplications: pendingApplications,
-		totalJobs,
-		totalJobApplications,
-		successfulPaymentsCount: totalPayments._count.id,
-		totalRevenue: totalPayments._sum.amount || 0,
+		message: "Platform stats retrieved successfully!",
+		data: {
+			totalUsers,
+			totalRecruiters,
+			totalCandidates,
+			pendingRecruiterApplications: pendingApplications,
+			totalJobs,
+			totalJobApplications,
+			successfulPaymentsCount: totalPayments._count.id,
+			totalRevenue: totalPayments._sum.amount || 0,
+		},
 	};
 };
 

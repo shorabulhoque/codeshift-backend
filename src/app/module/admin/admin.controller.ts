@@ -12,22 +12,26 @@ const getPendingRecruiters = catchAsync(async (_req: Request, res: Response) => 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: message,
-		data: data,
+		message,
+		data,
 	});
 });
 
 const verifyRecruiter = catchAsync(async (req: Request, res: Response) => {
 	const authUser = req.user as IAuthUser;
 	const { id } = req.params;
-	const result = await adminService.verifyRecruiter(authUser, id as string, req.body);
+	const result = await adminService.verifyRecruiter(
+		authUser,
+		id as string,
+		req.body,
+	);
 	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: message,
-		data: data,
+		message,
+		data,
 	});
 });
 
@@ -37,23 +41,25 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 		id as string,
 		req.body.status,
 	);
+	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: `User status changed to ${req.body.status}!`,
-		data: result,
+		message,
+		data,
 	});
 });
 
 const getPlatformStats = catchAsync(async (_req: Request, res: Response) => {
 	const result = await adminService.getPlatformStats();
+	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Platform stats retrieved successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 

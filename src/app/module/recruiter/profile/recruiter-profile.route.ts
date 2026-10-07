@@ -5,14 +5,19 @@ import { recruiterProfileController } from "./recruiter-profile.controller";
 import { checkAuth } from "../../../middleware/check-auth";
 import { USER_ROLE } from "../../../constants/auth.constant";
 import { upload } from "../../../middleware/multer";
+
 const router = express.Router();
+
+// router.get(
+//     "/me",
+//     checkAuth(USER_ROLE.RECRUITER),
+//     recruiterProfileController.getMyProfile,
+// );
 
 router.patch(
     "/me",
     checkAuth(USER_ROLE.RECRUITER),
-    validateRequest(
-        recruiterProfileValidation.updateMyProfileSchema
-    ),
+    validateRequest(recruiterProfileValidation.updateMyProfileSchema),
     recruiterProfileController.updateMyProfile,
 );
 
