@@ -20,7 +20,7 @@ import type {
 import {
 	AuthProvider,
 	RecruiterApplicationStatus,
-	RecruiterVerificationStatus,
+	// RecruiterVerificationStatus,
 	UserRole,
 	UserStatus,
 } from "../../../../generated/prisma/enums";
@@ -752,14 +752,14 @@ const switchRole = async (
 		const latestApplication = user.recruiterApplications[0];
 
 		if (!hasRecruiterRole || !user.recruiterProfile) {
-			if (latestApplication?.status === "PENDING") {
+			if (latestApplication?.status === RecruiterApplicationStatus.PENDING) {
 				throw new AppError(
 					httpStatus.BAD_REQUEST,
 					"Your recruiter application is still pending admin review.",
 				);
 			}
 
-			if (latestApplication?.status === "REJECTED") {
+			if (latestApplication?.status === RecruiterApplicationStatus.REJECTED) {
 				throw new AppError(
 					httpStatus.FORBIDDEN,
 					"Your recruiter application was rejected. Please re-apply first.",
