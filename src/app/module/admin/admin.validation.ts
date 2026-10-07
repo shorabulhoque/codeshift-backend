@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-	RecruiterVerificationStatus,
+	RecruiterApplicationStatus,
 	UserStatus,
 } from "../../../../generated/prisma/enums";
 
@@ -8,15 +8,15 @@ const verifyRecruiterSchema = z.object({
 	body: z
 		.object({
 			status: z.enum([
-				RecruiterVerificationStatus.APPROVED,
-				RecruiterVerificationStatus.REJECTED,
+				RecruiterApplicationStatus.APPROVED,
+				RecruiterApplicationStatus.REJECTED,
 			]),
-			rejectionReason: z.string().optional(),
+			rejectionReason: z.string().trim().optional(),
 		})
 		.refine(
 			(data) => {
 				if (
-					data.status === RecruiterVerificationStatus.REJECTED &&
+					data.status === RecruiterApplicationStatus.REJECTED &&
 					!data.rejectionReason
 				) {
 					return false;
@@ -24,7 +24,7 @@ const verifyRecruiterSchema = z.object({
 				return true;
 			},
 			{
-				message: "Rejection reason is required when rejecting a recruiter!",
+				message: "Rejection reason is required when rejecting an application!",
 				path: ["rejectionReason"],
 			},
 		),
@@ -32,7 +32,12 @@ const verifyRecruiterSchema = z.object({
 
 const updateUserStatusSchema = z.object({
 	body: z.object({
-		status: z.enum([UserStatus.ACTIVE, UserStatus.BLOCKED, UserStatus.PENDING]),
+		status: z.enum(
+			[UserStatus.ACTIVE, UserStatus.BLOCKED, UserStatus.PENDING],
+			{
+				message: "Invalid user status provided!",
+			},
+		),
 	}),
 });
 

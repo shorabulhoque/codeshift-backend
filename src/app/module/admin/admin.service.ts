@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
 import {
+	PaymentStatus,
 	RecruiterApplicationStatus,
 	UserRole,
 	UserStatus,
@@ -165,7 +166,7 @@ const verifyRecruiter = async (
 
 const updateUserStatus = async (userId: string, status: UserStatus) => {
 	const user = await prisma.user.findUnique({
-		where: { id: userId },
+		where: { id: userId, isDeleted: false },
 	});
 
 	if (!user) {
@@ -178,7 +179,8 @@ const updateUserStatus = async (userId: string, status: UserStatus) => {
 		select: {
 			id: true,
 			email: true,
-			role: true,
+			roles: true,
+			activeRole: true,
 			status: true,
 			updatedAt: true,
 		},
@@ -187,27 +189,41 @@ const updateUserStatus = async (userId: string, status: UserStatus) => {
 	return updatedUser;
 };
 
+
 const getPlatformStats = async () => {
 	const [
 		totalUsers,
 		totalRecruiters,
 		totalCandidates,
+		pendingApplications,
 		totalJobs,
-		totalApplications,
+		totalJobApplications,
+		totalPayments,
 	] = await Promise.all([
 		prisma.user.count({ where: { isDeleted: false } }),
 		prisma.recruiterProfile.count(),
 		prisma.candidateProfile.count(),
+		prisma.recruiterApplication.count({
+			where: { status: RecruiterApplicationStatus.PENDING },
+		}),
 		prisma.job.count(),
 		prisma.jobApplication.count(),
+		prisma.payment.aggregate({
+			where: { status: PaymentStatus.COMPLETED },
+			_sum: { amount: true },
+			_count: { id: true },
+		}),
 	]);
 
 	return {
 		totalUsers,
 		totalRecruiters,
 		totalCandidates,
+		pendingRecruiterApplications: pendingApplications,
 		totalJobs,
-		totalApplications,
+		totalJobApplications,
+		successfulPaymentsCount: totalPayments._count.id,
+		totalRevenue: totalPayments._sum.amount || 0,
 	};
 };
 
