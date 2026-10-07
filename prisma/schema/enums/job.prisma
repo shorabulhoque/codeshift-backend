@@ -18,3 +18,9 @@ enum ApplicationStatus {
   INTERVIEW_SCHEDULED
   REJECTED
 }
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

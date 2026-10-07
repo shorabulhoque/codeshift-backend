@@ -1,15 +1,17 @@
 model Job {
   id String @id @default(uuid())
 
+  recruiterId String
+  recruiter   RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+
   title             String
   description       String
+  requirements     String?
+  responsibilities String?
   assignmentDetails String
 
   deadline DateTime?
-
-  recruiterId String
-
-  recruiter RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  status   JobStatus @default(PUBLISHED)
 
   applications JobApplication[]
 
@@ -17,5 +19,6 @@ model Job {
   updatedAt DateTime @updatedAt
 
   @@index([recruiterId])
+  @@index([status])
   @@map("jobs")
 }

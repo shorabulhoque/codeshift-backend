@@ -796,9 +796,9 @@ const switchRole = async (
 	}
 
 	const jwtPayload = {
-		userId: user.id,
-		email: user.email,
-		role: user.activeRole,
+		userId: updatedUser.id,
+		email: updatedUser.email,
+		role: updatedUser.activeRole,
 		fullName: userFullName,
 	};
 

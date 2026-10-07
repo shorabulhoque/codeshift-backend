@@ -1,32 +1,33 @@
 import httpStatus from "http-status";
 import AppError from "../../errors/app-error";
 import { prisma } from "../../lib/prisma";
+import type { ICreateJobPayload } from "./job.interface";
 import type { Prisma } from "../../../../generated/prisma/client";
 
-const createJob = async (
-	userId: string,
-	payload: {
-		title: string;
-		description: string;
-		assignmentDetails: string;
-		deadline?: string;
-	},
-) => {
+const createJob = async (userId: string, payload: ICreateJobPayload) => {
 	const recruiter = await prisma.recruiterProfile.findUnique({
 		where: { userId },
 	});
-	if (!recruiter)
+	if (!recruiter) {
 		throw new AppError(httpStatus.NOT_FOUND, "Recruiter profile not found!");
+	}
 
-	return await prisma.job.create({
+	const result = await prisma.job.create({
 		data: {
 			title: payload.title,
 			description: payload.description,
 			assignmentDetails: payload.assignmentDetails,
+			requirements: payload.requirements ?? null,
+			responsibilities: payload.responsibilities ?? null,
 			deadline: payload.deadline ? new Date(payload.deadline) : null,
+			status: payload.status ?? "PUBLISHED",
 			recruiterId: recruiter.id,
 		},
 	});
+	return {
+		message: "Job posted successfully!",
+		data: result,
+	};
 };
 
 const getAllJobs = async (query: Record<string, unknown>) => {
@@ -42,7 +43,9 @@ const getAllJobs = async (query: Record<string, unknown>) => {
 	const limitNumber = Number(limit) || 10;
 	const skip = (pageNumber - 1) * limitNumber;
 
-	const andConditions: Prisma.JobWhereInput[] = [];
+	const andConditions: Prisma.JobWhereInput[] = [
+		{ status: "PUBLISHED" },
+	];
 
 	if (searchTerm) {
 		andConditions.push({
@@ -59,9 +62,13 @@ const getAllJobs = async (query: Record<string, unknown>) => {
 				},
 				{
 					recruiter: {
-						companyName: {
-							contains: searchTerm as string,
-							mode: "insensitive",
+						currentVersion: {
+							is: {
+								companyName: {
+									contains: searchTerm as string,
+									mode: "insensitive",
+								},
+							},
 						},
 					},
 				},
@@ -69,8 +76,7 @@ const getAllJobs = async (query: Record<string, unknown>) => {
 		});
 	}
 
-	const whereConditions: Prisma.JobWhereInput =
-		andConditions.length > 0 ? { AND: andConditions } : {};
+	const whereConditions: Prisma.JobWhereInput = { AND: andConditions };
 
 	const [result, total] = await Promise.all([
 		prisma.job.findMany({
@@ -82,7 +88,15 @@ const getAllJobs = async (query: Record<string, unknown>) => {
 			},
 			include: {
 				recruiter: {
-					select: { companyName: true, location: true, companyLogo: true },
+					select: {
+						currentVersion: {
+							select: {
+								companyName: true,
+								location: true,
+								companyLogo: true,
+							},
+						},
+					},
 				},
 			},
 		}),
@@ -90,6 +104,7 @@ const getAllJobs = async (query: Record<string, unknown>) => {
 	]);
 
 	return {
+		message: "Jobs fetched successfully!",
 		meta: {
 			page: pageNumber,
 			limit: limitNumber,
@@ -109,15 +124,19 @@ const getMyJobs = async (recruiterUserId: string) => {
 		throw new AppError(httpStatus.NOT_FOUND, "Recruiter profile not found!");
 	}
 
-	return await prisma.job.findMany({
+	const result = await prisma.job.findMany({
 		where: { recruiterId: recruiter.id },
 		include: {
 			_count: {
-				select: { applications: true }, // জবে কতজন অ্যাপ্লাই করেছে তার কাউন্ট
+				select: { applications: true },
 			},
 		},
 		orderBy: { createdAt: "desc" },
 	});
+	return {
+		message: "My posted jobs retrieved successfully!",
+		data: result,
+	}
 };
 
 export const JobService = { createJob, getAllJobs, getMyJobs };

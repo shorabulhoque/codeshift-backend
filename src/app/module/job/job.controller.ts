@@ -8,34 +8,39 @@ import type { IAuthUser } from "../auth/auth.interface";
 const createJob = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUser;
 	const result = await JobService.createJob(user.userId, req.body);
+	const { message, data } = result;
+
 	sendResponse(res, {
 		statusCode: httpStatus.CREATED,
 		success: true,
-		message: "Job posted successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 
 const getAllJobs = catchAsync(async (req: Request, res: Response) => {
 	const result = await JobService.getAllJobs(req.query);
+	const { message, meta, data } = result;
+
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "Jobs fetched successfully!",
-		meta: result.meta,
-		data: result.data,
+		message,
+		meta,
+		data,
 	});
 });
 
 const getMyJobs = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IAuthUser;
 	const result = await JobService.getMyJobs(user.userId);
+	const { message, data } = result;
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
-		message: "My posted jobs retrieved successfully!",
-		data: result,
+		message,
+		data,
 	});
 });
 
