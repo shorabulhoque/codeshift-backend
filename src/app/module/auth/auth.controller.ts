@@ -217,6 +217,24 @@ const switchRole = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const logout = catchAsync(async (req: Request, res: Response) => {
+	const cookieOptions = {
+		secure: config.isProduction,
+		httpOnly: true,
+		sameSite: config.isProduction ? ("none" as const) : ("lax" as const),
+	};
+
+	res.clearCookie("accessToken", cookieOptions);
+	res.clearCookie("refreshToken", cookieOptions);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "User Logged Out Successfully",
+		data: null,
+	});
+})
+
 export const authController = {
 	register,
 	verifyEmail,
@@ -228,4 +246,5 @@ export const authController = {
 	getMe,
 	changePassword,
 	switchRole,
+	logout,
 };

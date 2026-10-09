@@ -61,4 +61,9 @@ router.post(
 	authController.switchRole,
 );
 
+router.post(
+	"/logout",
+	authController.logout,
+);
+
 export const AuthRoutes = router;
